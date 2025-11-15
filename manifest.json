@@ -1,0 +1,35 @@
+{
+  "manifest_version": 3,
+  "name": "Hyper Cookie",
+  "version": "1.0.9",
+  "description": "Tiện ích nội bộ để xem, sao chép và quản lý cookie ngay trong trình duyệt.",
+  "permissions": [
+    "cookies",
+    "storage",
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "<all_urls>"
+  ],
+  "action": {
+    "default_title": "Hyper Cookie",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "images/10.png",
+      "32": "images/10.png",
+      "48": "images/10.png",
+      "128": "images/10.png"
+    }
+  },
+  "icons": {
+    "16": "images/10.png",
+    "32": "images/10.png",
+    "48": "images/10.png",
+    "128": "images/10.png"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  }
+}

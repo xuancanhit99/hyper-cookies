@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <title>Hyper Cookie</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body class="hc-view-home hc-theme-dark">
+  <div class="hc-content">
+    <header class="hc-header">
+      <div class="hc-title">
+        <img src="images/10.svg" alt="Hyper Cookie logo" class="hc-logo">
+        <div>
+          <h1>Hyper Cookie</h1>
+          <small id="active-domain">Đang tải...</small>
+        </div>
+      </div>
+      <div class="hc-header-actions">
+        <button type="button" id="language-toggle" class="hc-icon-btn hc-flag-btn" data-i18n-title="languageToggle">
+          <img src="images/vn.svg" alt="Vietnamese flag" class="hc-flag-icon" aria-hidden="true">
+        </button>
+        <button type="button" id="theme-toggle" class="hc-icon-btn">
+          <span class="material-symbols-rounded" aria-hidden="true">dark_mode</span>
+        </button>
+        <button id="refresh-btn" class="hc-icon-btn" title="Tải lại cookies" data-i18n-title="refreshTooltip">
+          <span class="material-symbols-rounded" aria-hidden="true">cached</span>
+        </button>
+      </div>
+    </header>
+
+    <div class="hc-toggle">
+      <button id="home-tab" class="active" data-i18n="tabHome">Trang chủ</button>
+      <button id="cookies-tab" data-i18n="tabCookies">Cookies</button>
+      <button id="storage-tab" data-i18n="tabStorage">Bộ nhớ</button>
+    </div>
+
+    <section id="home-section" class="hc-home-section active">
+      <label class="hc-url-label">
+        <div class="hc-readonly-input">
+          <input type="text" id="target-url" placeholder="https://example.com" readonly>
+        </div>
+        <div class="hc-url-divider" aria-hidden="true"></div>
+        <button type="button" id="copy-url-btn" class="hc-url-chip" title="Copy URL hiện tại" data-i18n-title="copyUrlTitle">
+          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
+        </button>
+      </label>
+      <div class="hc-actions-row">
+        <div class="hc-btn-pair">
+          <button id="export-json" class="hc-btn hc-btn-amber hc-btn-sm">
+            <span class="hc-btn-icon material-symbols-rounded" aria-hidden="true">file_export</span>
+            <span id="export-json-label" data-i18n="exportJson">Export JSON</span>
+          </button>
+          <button id="import-json" class="hc-btn hc-btn-emerald hc-btn-sm">
+            <span class="hc-btn-icon material-symbols-rounded" aria-hidden="true">file_open</span>
+            <span id="import-json-label" data-i18n="importJson">Import JSON</span>
+          </button>
+        </div>
+        <input type="file" id="import-file" accept="application/json" hidden>
+      </div>
+      <div class="hc-option-row">
+        <label class="hc-checkbox">
+          <input type="checkbox" id="auto-reload-checkbox">
+          <span data-i18n="autoReloadLabel">Tự làm mới trang sau khi import</span>
+        </label>
+      </div>
+    </section>
+
+    <section class="hc-table-container hc-data-section" id="cookies-section">
+      <table>
+        <thead>
+        <tr>
+          <th data-i18n="cookiesColumnName">Tên</th>
+          <th data-i18n="cookiesColumnDomain">Domain</th>
+          <th data-i18n="cookiesColumnExpiry">Hết hạn</th>
+          <th data-i18n="cookiesColumnValue">Giá trị</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody id="cookie-table-body">
+        <tr>
+          <td colspan="5" class="hc-empty">Chưa có dữ liệu</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="hc-table-container hc-data-section" id="storage-section">
+      <table>
+        <thead>
+        <tr>
+          <th data-i18n="storageColumnKey">Key</th>
+          <th data-i18n="storageColumnValue">Value</th>
+          <th></th>
+        </tr>
+        </thead>
+        <tbody id="storage-table-body">
+        <tr>
+          <td colspan="3" class="hc-empty">Chưa có dữ liệu</td>
+        </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <template id="cookie-row-template">
+      <tr class="hc-row">
+        <td class="hc-cookie-name" data-label="Tên"></td>
+        <td class="hc-cookie-domain" data-label="Domain"></td>
+        <td class="hc-cookie-expiry" data-label="Hết hạn"></td>
+        <td class="hc-cookie-value" data-label="Giá trị"></td>
+        <td class="hc-actions">
+          <button class="hc-delete" title="Xóa cookie">
+            <span class="material-symbols-rounded">backspace</span>
+          </button>
+        </td>
+      </tr>
+    </template>
+
+    <template id="storage-row-template">
+      <tr class="hc-row">
+        <td class="hc-storage-key" data-label="Key"></td>
+        <td class="hc-storage-value" data-label="Value"></td>
+        <td class="hc-actions">
+          <button class="hc-delete" title="Xóa item">
+            <span class="material-symbols-rounded">backspace</span>
+          </button>
+        </td>
+      </tr>
+    </template>
+
+    <div id="toast" class="hc-toast"></div>
+  </div>
+
+  <footer class="hc-footer">
+    <small>© 2025 HYPER - Developed by <a href="https://t.me/hennryvu" target="_blank" rel="noopener noreferrer">Xuan Canh</a></small>
+  </footer>
+
+  <script src="popup.js" type="module"></script>
+</body>
+</html>
