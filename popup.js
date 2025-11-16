@@ -1,4 +1,4 @@
-const cookieTableBody = document.getElementById('cookie-table-body');
+﻿const cookieTableBody = document.getElementById('cookie-table-body');
 const storageTableBody = document.getElementById('storage-table-body');
 const cookieRowTemplate = document.getElementById('cookie-row-template');
 const storageRowTemplate = document.getElementById('storage-row-template');
@@ -26,6 +26,7 @@ const clearAllBtn = document.getElementById('clear-all-btn');
 const copyUrlBtn = document.getElementById('copy-url-btn');
 const themeToggleBtn = document.getElementById('theme-toggle');
 const languageToggleBtn = document.getElementById('language-toggle');
+const proToggleBtn = document.getElementById('pro-toggle');
 const autoReloadCheckbox = document.getElementById('auto-reload-checkbox');
 const base64ExportCheckbox = document.getElementById('base64-export-checkbox');
 const exportJsonLabelEl = document.getElementById('export-json-label');
@@ -40,10 +41,12 @@ const LANGUAGE_STORAGE_KEY = 'hyper-cookies:language';
 const THEME_STORAGE_KEY = 'hyper-cookies:theme';
 const AUTO_RELOAD_KEY = 'hyper-cookies:auto-reload';
 const BASE64_EXPORT_KEY = 'hyper-cookies:base64-export';
+const PRO_FEATURES_KEY = 'hyper-cookies:pro-enabled';
 const DEFAULT_LANGUAGE = 'vi';
 const DEFAULT_THEME = 'dark';
 const DEFAULT_AUTO_RELOAD = true;
 const DEFAULT_BASE64_EXPORT = true;
+const DEFAULT_PRO_ENABLED = false;
 const FLAG_BY_LANG = {
   vi: {
     src: 'images/vn.svg',
@@ -127,6 +130,9 @@ const translations = {
     themeToggleDark: 'Chuyển sang giao diện tối',
     themeToggleLight: 'Chuyển sang giao diện sáng',
     languageToggle: 'Chuyển ngôn ngữ',
+    proToggleEnable: 'Mở khóa tính năng Pro',
+    proToggleDisable: 'Tắt chế độ Pro',
+    proFeatureLocked: 'Đây là tính năng nâng cao, vui lòng bật Pro để sử dụng.',
     autoReloadLabel: 'Tự động làm mới trang sau khi import',
     updateCookieSuccess: 'Đã cập nhật cookie',
     updateStorageSuccess: 'Đã cập nhật local storage',
@@ -207,6 +213,9 @@ const translations = {
     themeToggleDark: 'Switch to dark theme',
     themeToggleLight: 'Switch to light theme',
     languageToggle: 'Switch language',
+    proToggleEnable: 'Unlock Pro features',
+    proToggleDisable: 'Turn off Pro mode',
+    proFeatureLocked: 'This is a Pro feature. Please enable Pro to use it.',
     autoReloadLabel: 'Refresh tab after import',
     updateCookieSuccess: 'Cookie updated',
     updateStorageSuccess: 'Local storage updated',
@@ -226,6 +235,7 @@ let currentLanguage = DEFAULT_LANGUAGE;
 let currentTheme = DEFAULT_THEME;
 let autoReloadEnabled = DEFAULT_AUTO_RELOAD;
 let base64ExportEnabled = DEFAULT_BASE64_EXPORT;
+let proEnabled = DEFAULT_PRO_ENABLED;
 
 document.addEventListener('DOMContentLoaded', init);
 refreshBtn.addEventListener('click', loadActiveData);
@@ -265,11 +275,14 @@ if (themeToggleBtn) {
 if (languageToggleBtn) {
   languageToggleBtn.addEventListener('click', toggleLanguage);
 }
+if (proToggleBtn) {
+  proToggleBtn.addEventListener('click', toggleProMode);
+}
 if (autoReloadCheckbox) {
-autoReloadCheckbox.addEventListener('change', handleAutoReloadChange);
+  autoReloadCheckbox.addEventListener('change', handleAutoReloadChange);
+}
 if (base64ExportCheckbox) {
   base64ExportCheckbox.addEventListener('change', handleBase64ExportChange);
-}
 }
 
 async function init() {
@@ -283,7 +296,13 @@ async function init() {
 
 async function loadPreferences() {
   try {
-    const stored = await getFromStorage([LANGUAGE_STORAGE_KEY, THEME_STORAGE_KEY, AUTO_RELOAD_KEY]);
+    const stored = await getFromStorage([
+      LANGUAGE_STORAGE_KEY,
+      THEME_STORAGE_KEY,
+      AUTO_RELOAD_KEY,
+      BASE64_EXPORT_KEY,
+      PRO_FEATURES_KEY
+    ]);
     if (stored?.[LANGUAGE_STORAGE_KEY] && translations[stored[LANGUAGE_STORAGE_KEY]]) {
       currentLanguage = stored[LANGUAGE_STORAGE_KEY];
     }
@@ -300,6 +319,11 @@ async function loadPreferences() {
     } else {
       base64ExportEnabled = DEFAULT_BASE64_EXPORT;
     }
+    if (typeof stored?.[PRO_FEATURES_KEY] === 'boolean') {
+      proEnabled = stored[PRO_FEATURES_KEY];
+    } else {
+      proEnabled = DEFAULT_PRO_ENABLED;
+    }
   } catch (error) {
     console.warn('Hyper Cookies: cannot load preferences', error);
   }
@@ -309,6 +333,7 @@ async function loadPreferences() {
   if (base64ExportCheckbox) {
     base64ExportCheckbox.checked = base64ExportEnabled;
   }
+  updateProToggle();
   updateExportImportLabels();
 }
 
@@ -842,6 +867,12 @@ function showToast(message, isError = false) {
   showToast.timeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
 }
 
+function requirePro() {
+  if (proEnabled) return true;
+  showToast(t('proFeatureLocked'), true);
+  return false;
+}
+
 function setLoading(isLoading) {
   refreshBtn.disabled = isLoading;
   exportJsonBtn.disabled = isLoading;
@@ -856,6 +887,10 @@ function setLoading(isLoading) {
 }
 
 function setActiveView(view) {
+  if (!proEnabled && (view === VIEW_COOKIES || view === VIEW_STORAGE)) {
+    showToast(t('proFeatureLocked'), true);
+    return;
+  }
   if (activeView === view) return;
   activeView = view;
   updateViewUI();
@@ -1162,6 +1197,7 @@ function applyTranslations() {
     activeDomainLabel.textContent = t('loadingDomain');
   }
   updateLanguageToggle();
+  updateProToggle();
   updateThemeToggleIcon();
   updateExportImportLabels();
 }
@@ -1204,12 +1240,38 @@ function updateLanguageToggle() {
   languageToggleBtn.setAttribute('aria-label', t('languageToggle'));
 }
 
+function toggleProMode() {
+  proEnabled = !proEnabled;
+  savePreference(PRO_FEATURES_KEY, proEnabled);
+  updateProToggle();
+  if (!proEnabled && (activeView === VIEW_COOKIES || activeView === VIEW_STORAGE)) {
+    setActiveView(VIEW_HOME);
+  }
+}
+
+function updateProToggle() {
+  if (!proToggleBtn) return;
+  proToggleBtn.classList.toggle('hc-pro-active', proEnabled);
+  proToggleBtn.setAttribute('aria-pressed', String(proEnabled));
+  const label = t(proEnabled ? 'proToggleDisable' : 'proToggleEnable');
+  proToggleBtn.title = label;
+  proToggleBtn.setAttribute('aria-label', label);
+}
+
 function handleAutoReloadChange(event) {
+  if (!requirePro()) {
+    event.target.checked = autoReloadEnabled;
+    return;
+  }
   autoReloadEnabled = Boolean(event.target.checked);
   savePreference(AUTO_RELOAD_KEY, autoReloadEnabled);
 }
 
 function handleBase64ExportChange(event) {
+  if (!requirePro()) {
+    event.target.checked = base64ExportEnabled;
+    return;
+  }
   base64ExportEnabled = Boolean(event.target.checked);
   savePreference(BASE64_EXPORT_KEY, base64ExportEnabled);
   updateExportImportLabels();
@@ -1277,5 +1339,6 @@ function t(key, vars = {}) {
 function formatError(error) {
   return error?.message || String(error);
 }
+
 
 

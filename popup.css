@@ -18,6 +18,9 @@
   --hc-url-chip-bg: #ffffff;
   --hc-url-chip-hover: #f8fafc;
   --hc-url-chip-active: #e2e8f0;
+  --hc-pro: #fbbf24;
+  --hc-pro-strong: #f59e0b;
+  --hc-pro-text: #422006;
   font-family: "Roboto", "Inter", system-ui, sans-serif;
   color: var(--hc-text);
   background: var(--hc-bg);
@@ -55,6 +58,9 @@ body.hc-theme-dark {
   --hc-url-chip-bg: #1f2b44;
   --hc-url-chip-hover: #243152;
   --hc-url-chip-active: #19253d;
+  --hc-pro: #f59e0b;
+  --hc-pro-strong: #f97316;
+  --hc-pro-text: #1f1300;
 }
 
 .hc-content {
@@ -243,6 +249,26 @@ button:disabled {
 
 .hc-icon-btn:hover {
   background: var(--hc-url-chip-hover);
+}
+
+.hc-pro-btn {
+  transition: transform 120ms ease, box-shadow 120ms ease, background 160ms ease, border-color 160ms ease;
+}
+
+.hc-pro-btn.hc-pro-active {
+  background: linear-gradient(140deg, var(--hc-pro), var(--hc-pro-strong));
+  border-color: rgba(245, 158, 11, 0.55);
+  color: var(--hc-pro-text);
+  box-shadow: 0 4px 14px rgba(245, 158, 11, 0.3);
+}
+
+.hc-pro-btn.hc-pro-active .material-symbols-rounded {
+  font-variation-settings: 'FILL' 1, 'wght' 500, 'GRAD' 0, 'opsz' 24;
+}
+
+.hc-pro-btn.hc-pro-active:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(245, 158, 11, 0.35);
 }
 
 .hc-toggle {
