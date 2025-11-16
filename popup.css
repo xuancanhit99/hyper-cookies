@@ -542,7 +542,7 @@ td {
   filter: blur(1px);
   transform: translateX(-130%);
   opacity: 0;
-  animation: hc-divider-shine 6s linear infinite;
+  animation: hc-divider-shine 5s linear infinite;
 }
 
 .hc-theme-dark .hc-footer-divider {
