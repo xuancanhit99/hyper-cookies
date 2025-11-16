@@ -158,8 +158,14 @@ button:disabled {
 }
 
 .hc-btn-icon {
+  display: inline-flex;
+  align-items: flex-start;
+  justify-content: center;
   font-size: 16px;
   line-height: 1;
+  vertical-align: middle;
+  position: relative;
+  top: 0;
 }
 
 .hc-btn-icon-img {
@@ -562,17 +568,27 @@ td {
   z-index: 1200;
 }
 
+.hc-modal::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  margin: auto;
+  max-width: 420px;
+  max-height: 240px;
+  border-radius: 20px;
+}
+
 .hc-modal.open {
   display: flex;
 }
 
 .hc-modal-content {
   width: 100%;
-  max-width: 380px;
-  border-radius: 16px;
+  max-width: min(420px, calc(100vw - 32px));
+  border-radius: 18px;
   background: var(--hc-panel-bg);
   border: 1px solid var(--hc-border-strong);
-  padding: 20px;
+  padding: 22px;
   box-shadow: 0 24px 45px rgba(15, 23, 42, 0.35);
   color: var(--hc-text);
 }
@@ -588,6 +604,14 @@ td {
 .hc-modal-header h2 {
   font-size: 18px;
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hc-modal-header img {
+  width: 22px;
+  height: 22px;
 }
 
 .hc-modal-description {
@@ -612,14 +636,16 @@ td {
 
 .hc-modal-field input {
   width: 100%;
-  padding: 10px 12px;
-  border-radius: 10px;
+  min-width: 0;
+  padding: 12px 14px;
+  border-radius: 12px;
   border: 1px solid var(--hc-border);
   background: var(--hc-input-bg);
   color: var(--hc-text);
   font-size: 13px;
   outline: none;
   transition: border-color 150ms ease, box-shadow 150ms ease;
+  box-sizing: border-box;
 }
 
 .hc-modal-field input:focus {
