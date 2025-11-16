@@ -1,4 +1,4 @@
-// Service worker cho Hyper Cookie
+// Service worker cho Hyper Cookies
 
 const COOKIE_CACHE_KEY = 'hyper-cookie:last-domain';
 
@@ -7,7 +7,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     handleGetCookies(message.payload)
       .then(cookies => sendResponse({ cookies }))
       .catch(error => {
-        console.error('Hyper Cookie: error while fetching cookies', error);
+        console.error('Hyper Cookies: error while fetching cookies', error);
         sendResponse({ error: error.message });
       });
     return true; // keep channel for async response
@@ -36,7 +36,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     handleGetLocalStorage(message.payload?.tabId)
       .then(entries => sendResponse({ entries }))
       .catch(error => {
-        console.error('Hyper Cookie: error while reading local storage', error);
+        console.error('Hyper Cookies: error while reading local storage', error);
         sendResponse({ error: error.message });
       });
     return true;
@@ -46,7 +46,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     removeLocalStorageItem(message.payload?.tabId, message.payload?.key)
       .then(result => sendResponse(result))
       .catch(error => {
-        console.error('Hyper Cookie: error removing local storage item', error);
+        console.error('Hyper Cookies: error removing local storage item', error);
         sendResponse({ error: error.message });
       });
     return true;
@@ -56,7 +56,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     importCookies(message.payload?.cookies || [], message.payload?.targetUrl)
       .then(result => sendResponse(result))
       .catch(error => {
-        console.error('Hyper Cookie: error importing cookies', error);
+        console.error('Hyper Cookies: error importing cookies', error);
         sendResponse({ error: error.message });
       });
     return true;
@@ -66,7 +66,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     importLocalStorage(message.payload?.tabId, message.payload?.entries || [])
       .then(result => sendResponse(result))
       .catch(error => {
-        console.error('Hyper Cookie: error importing local storage', error);
+        console.error('Hyper Cookies: error importing local storage', error);
         sendResponse({ error: error.message });
       });
     return true;
@@ -76,7 +76,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     updateCookieFields(message.payload)
       .then(result => sendResponse(result))
       .catch(error => {
-        console.error('Hyper Cookie: error updating cookie fields', error);
+        console.error('Hyper Cookies: error updating cookie fields', error);
         sendResponse({ error: error.message });
       });
     return true;
@@ -86,7 +86,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     updateLocalStorageValue(message.payload)
       .then(result => sendResponse(result))
       .catch(error => {
-        console.error('Hyper Cookie: error updating local storage value', error);
+        console.error('Hyper Cookies: error updating local storage value', error);
         sendResponse({ error: error.message });
       });
     return true;
@@ -96,7 +96,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     renameLocalStorageKey(message.payload)
       .then(result => sendResponse(result))
       .catch(error => {
-        console.error('Hyper Cookie: error renaming local storage key', error);
+        console.error('Hyper Cookies: error renaming local storage key', error);
         sendResponse({ error: error.message });
       });
     return true;
@@ -114,7 +114,7 @@ async function handleGetCookies({ url }) {
     const domain = new URL(url).hostname;
     await chrome.storage.local.set({ [COOKIE_CACHE_KEY]: domain });
   } catch (error) {
-    console.warn('Hyper Cookie: cannot cache domain', error);
+    console.warn('Hyper Cookies: cannot cache domain', error);
   }
   return cookies;
 }
@@ -187,7 +187,7 @@ async function importCookies(cookies, fallbackUrl) {
       });
       imported += 1;
     } catch (error) {
-      console.warn('Hyper Cookie: failed to import cookie', cookie.name, error);
+      console.warn('Hyper Cookies: failed to import cookie', cookie.name, error);
     }
   }
   return { imported };
@@ -228,7 +228,7 @@ function buildCookieUrl(cookie, fallbackUrl) {
     const path = cookie.path || '/';
     return `${protocol}${domain}${path.startsWith('/') ? path : `/${path}`}`;
   } catch (error) {
-    console.warn('Hyper Cookie: cannot build cookie url', error);
+    console.warn('Hyper Cookies: cannot build cookie url', error);
     return null;
   }
 }
@@ -271,7 +271,7 @@ async function updateCookieFields({ cookie, changes, fallbackUrl }) {
         });
       }
     } catch (error) {
-      console.warn('Hyper Cookie: failed to remove original cookie after update', error);
+      console.warn('Hyper Cookies: failed to remove original cookie after update', error);
     }
   }
   return { ok: true, updatedCookie };

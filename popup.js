@@ -289,7 +289,7 @@ async function loadPreferences() {
       base64ExportEnabled = DEFAULT_BASE64_EXPORT;
     }
   } catch (error) {
-    console.warn('Hyper Cookie: cannot load preferences', error);
+    console.warn('Hyper Cookies: cannot load preferences', error);
   }
   if (autoReloadCheckbox) {
     autoReloadCheckbox.checked = autoReloadEnabled;
