@@ -1089,6 +1089,9 @@ async function handleClearAll() {
     }
     showToast(t('clearAllSuccess'));
     await loadActiveData();
+    if (autoReloadEnabled && activeTab?.id) {
+      chrome.tabs.reload(activeTab.id);
+    }
   } catch (error) {
     console.error('Clear all failed', error);
     showToast(t('clearAllError', { error: formatError(error) }), true);
