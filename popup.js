@@ -15,6 +15,13 @@ const refreshBtn = document.getElementById('refresh-btn');
 const exportJsonBtn = document.getElementById('export-json');
 const importJsonBtn = document.getElementById('import-json');
 const importFileInput = document.getElementById('import-file');
+const importDriveBtn = document.getElementById('import-drive');
+const driveModal = document.getElementById('drive-import-modal');
+const driveForm = document.getElementById('drive-import-form');
+const driveUrlInput = document.getElementById('drive-import-url');
+const driveCancelBtn = document.getElementById('drive-import-cancel');
+const driveSubmitBtn = document.getElementById('drive-import-submit');
+const driveCloseBtn = document.getElementById('drive-import-close');
 const copyUrlBtn = document.getElementById('copy-url-btn');
 const themeToggleBtn = document.getElementById('theme-toggle');
 const languageToggleBtn = document.getElementById('language-toggle');
@@ -51,6 +58,16 @@ const translations = {
     urlLabel: 'URL',
     exportJson: 'Export JSON',
     importJson: 'Import JSON',
+    importDrive: 'Import Drive',
+    importDriveModalTitle: 'Import từ Google Drive',
+    importDriveModalDescription: 'Dán link chia sẻ file JSON trên Google Drive để bắt đầu import.',
+    importDriveLinkLabel: 'Link Google Drive',
+    importDrivePlaceholder: 'https://drive.google.com/...',
+    importDriveUrlMissing: 'Nhập link Google Drive hợp lệ',
+    importDriveFetchError: 'Không thể tải file: {{error}}',
+    importDriveStart: 'Import',
+    cancel: 'Huỷ',
+    closeModal: 'Đóng',
     cookiesColumnName: 'Tên',
     cookiesColumnDomain: 'Domain',
     cookiesColumnExpiry: 'Hết hạn',
@@ -114,6 +131,16 @@ const translations = {
     urlLabel: 'URL',
     exportJson: 'Export JSON',
     importJson: 'Import JSON',
+    importDrive: 'Import Drive',
+    importDriveModalTitle: 'Import from Google Drive',
+    importDriveModalDescription: 'Paste the shared JSON link from Google Drive to import.',
+    importDriveLinkLabel: 'Google Drive link',
+    importDrivePlaceholder: 'https://drive.google.com/...',
+    importDriveUrlMissing: 'Enter a Google Drive link',
+    importDriveFetchError: 'Unable to fetch file: {{error}}',
+    importDriveStart: 'Import',
+    cancel: 'Cancel',
+    closeModal: 'Close',
     cookiesColumnName: 'Name',
     cookiesColumnDomain: 'Domain',
     cookiesColumnExpiry: 'Expires',
@@ -187,6 +214,31 @@ storageTabBtn.addEventListener('click', () => setActiveView(VIEW_STORAGE));
 exportJsonBtn.addEventListener('click', exportData);
 importJsonBtn.addEventListener('click', () => importFileInput.click());
 importFileInput.addEventListener('change', handleImportFile);
+if (importDriveBtn) {
+  importDriveBtn.addEventListener('click', openDriveImportModal);
+}
+if (driveForm) {
+  driveForm.addEventListener('submit', handleDriveImportSubmit);
+}
+if (driveCancelBtn) {
+  driveCancelBtn.addEventListener('click', closeDriveImportModal);
+}
+if (driveCloseBtn) {
+  driveCloseBtn.addEventListener('click', closeDriveImportModal);
+}
+if (driveModal) {
+  driveModal.addEventListener('click', event => {
+    if (event.target === driveModal) {
+      closeDriveImportModal();
+    }
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && driveModal.classList.contains('open')) {
+      event.preventDefault();
+      closeDriveImportModal();
+    }
+  });
+}
 copyUrlBtn.addEventListener('click', copyUrlToClipboard);
 if (themeToggleBtn) {
   themeToggleBtn.addEventListener('click', toggleTheme);
@@ -495,22 +547,24 @@ async function handleImportFile(event) {
   try {
     const text = await file.text();
     const payload = JSON.parse(text);
-    validateImportPayload(payload);
-
-    const sourceHost = payload.sourceHostname || safeHostname(payload.sourceUrl);
-    const currentHost = safeHostname(activeTab?.url || targetUrlInput.value);
-    if (sourceHost && currentHost && sourceHost !== currentHost) {
-      const proceed = confirm(t('importHostMismatch', { source: sourceHost, current: currentHost }));
-      if (!proceed) return;
-    }
-
-    await importData(payload);
+    await processImportedPayload(payload);
   } catch (error) {
     console.error(error);
     showToast(t('importError', { error: formatError(error) }), true);
   } finally {
     event.target.value = '';
   }
+}
+
+async function processImportedPayload(payload) {
+  validateImportPayload(payload);
+  const sourceHost = payload.sourceHostname || safeHostname(payload.sourceUrl);
+  const currentHost = safeHostname(activeTab?.url || targetUrlInput.value);
+  if (sourceHost && currentHost && sourceHost !== currentHost) {
+    const proceed = confirm(t('importHostMismatch', { source: sourceHost, current: currentHost }));
+    if (!proceed) return;
+  }
+  await importData(payload);
 }
 
 async function importData(payload) {
@@ -547,6 +601,96 @@ async function importData(payload) {
     }
   } finally {
     setLoading(false);
+  }
+}
+
+function openDriveImportModal() {
+  if (!driveModal) return;
+  driveModal.classList.add('open');
+  driveModal.setAttribute('aria-hidden', 'false');
+  setDriveImportLoading(false);
+  setTimeout(() => driveUrlInput?.focus(), 50);
+}
+
+function closeDriveImportModal() {
+  if (!driveModal) return;
+  driveModal.classList.remove('open');
+  driveModal.setAttribute('aria-hidden', 'true');
+  setDriveImportLoading(false);
+  if (driveForm) {
+    driveForm.reset();
+  }
+}
+
+async function handleDriveImportSubmit(event) {
+  event.preventDefault();
+  if (!driveUrlInput) return;
+  const driveLink = driveUrlInput.value.trim();
+  if (!driveLink) {
+    showToast(t('importDriveUrlMissing'), true);
+    return;
+  }
+  setDriveImportLoading(true);
+  try {
+    const payload = await fetchDrivePayload(driveLink);
+    await processImportedPayload(payload);
+    closeDriveImportModal();
+  } catch (error) {
+    console.error('Drive import failed', error);
+    showToast(t('importError', { error: formatError(error) }), true);
+  } finally {
+    setDriveImportLoading(false);
+  }
+}
+
+async function fetchDrivePayload(url) {
+  const downloadUrl = buildDriveDownloadUrl(url);
+  const response = await fetch(downloadUrl);
+  if (!response.ok) {
+    throw new Error(t('importDriveFetchError', { error: response.statusText || response.status }));
+  }
+  const text = await response.text();
+  try {
+    return JSON.parse(text);
+  } catch (error) {
+    throw new Error(t('validatePayloadInvalid'));
+  }
+}
+
+function setDriveImportLoading(isLoading) {
+  if (driveSubmitBtn) {
+    driveSubmitBtn.disabled = isLoading;
+  }
+  if (driveCancelBtn) {
+    driveCancelBtn.disabled = isLoading;
+  }
+  if (driveUrlInput) {
+    driveUrlInput.disabled = isLoading;
+  }
+}
+
+function buildDriveDownloadUrl(input) {
+  try {
+    const url = new URL(input);
+    const host = url.hostname;
+    if (!host.includes('drive.google.com')) {
+      return input;
+    }
+    if (url.pathname.includes('/uc')) {
+      return input;
+    }
+    const fileMatch = url.pathname.match(/\/file\/d\/([^/]+)/);
+    if (fileMatch?.[1]) {
+      const fileId = fileMatch[1];
+      return `https://drive.google.com/uc?export=download&id=${fileId}`;
+    }
+    const openId = url.searchParams.get('id');
+    if (openId) {
+      return `https://drive.google.com/uc?export=download&id=${openId}`;
+    }
+    return input;
+  } catch (error) {
+    return input;
   }
 }
 
@@ -594,6 +738,9 @@ function setLoading(isLoading) {
   refreshBtn.disabled = isLoading;
   exportJsonBtn.disabled = isLoading;
   importJsonBtn.disabled = isLoading;
+  if (importDriveBtn) {
+    importDriveBtn.disabled = isLoading;
+  }
   const icon = refreshBtn.querySelector('.material-symbols-rounded');
   if (icon) {
     icon.textContent = isLoading ? 'hourglass_top' : 'cached';
@@ -858,6 +1005,18 @@ function applyTranslations() {
     const key = el.dataset.i18nTitle;
     if (key) {
       el.title = t(key);
+    }
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+    const key = el.dataset.i18nPlaceholder;
+    if (key) {
+      el.setAttribute('placeholder', t(key));
+    }
+  });
+  document.querySelectorAll('[data-i18n-aria-label]').forEach(el => {
+    const key = el.dataset.i18nAriaLabel;
+    if (key) {
+      el.setAttribute('aria-label', t(key));
     }
   });
   if (activeDomainLabel.dataset.domainSet !== 'true') {

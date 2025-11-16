@@ -58,6 +58,10 @@
             <span id="import-json-label" data-i18n="importJson">Import JSON</span>
           </button>
         </div>
+        <button type="button" id="import-drive" class="hc-btn hc-btn-primary hc-btn-sm">
+          <span class="hc-btn-icon material-symbols-rounded" aria-hidden="true">cloud_download</span>
+          <span id="import-drive-label" data-i18n="importDrive">Import Drive</span>
+        </button>
         <input type="file" id="import-file" accept="application/json" hidden>
       </div>
       <div class="hc-option-row">
@@ -137,6 +141,33 @@
   <footer class="hc-footer">
     <small>© 2025 HYPER - Developed by <a href="https://t.me/hennryvu" target="_blank" rel="noopener noreferrer">Xuan Canh</a></small>
   </footer>
+
+  <div id="drive-import-modal" class="hc-modal" aria-hidden="true">
+    <div class="hc-modal-content" role="dialog" aria-modal="true" aria-labelledby="drive-import-title">
+      <div class="hc-modal-header">
+        <h2 id="drive-import-title" data-i18n="importDriveModalTitle">Import from Google Drive</h2>
+        <button type="button" class="hc-icon-btn hc-modal-close" id="drive-import-close" aria-label="Close" data-i18n-aria-label="closeModal" data-i18n-title="closeModal">
+          <span class="material-symbols-rounded" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <p class="hc-modal-description" data-i18n="importDriveModalDescription">
+        Paste the Google Drive JSON link you want to import.
+      </p>
+      <form id="drive-import-form" class="hc-modal-form">
+        <label class="hc-modal-field" for="drive-import-url">
+          <span data-i18n="importDriveLinkLabel">Google Drive link</span>
+          <input type="url" id="drive-import-url" placeholder="https://drive.google.com/..." required data-i18n-placeholder="importDrivePlaceholder">
+        </label>
+        <div class="hc-modal-actions">
+          <button type="button" class="hc-btn hc-btn-ghost" id="drive-import-cancel" data-i18n="cancel">Cancel</button>
+          <button type="submit" class="hc-btn hc-btn-primary" id="drive-import-submit">
+            <span class="hc-btn-icon material-symbols-rounded" aria-hidden="true">cloud_download</span>
+            <span data-i18n="importDriveStart">Import</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
   <script src="popup.js" type="module"></script>
 </body>
