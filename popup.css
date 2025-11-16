@@ -12,8 +12,8 @@
   --hc-toggle-bg: #e2e8f0;
   --hc-toggle-active-bg: #ffffff;
   --hc-input-bg: #f1f5f9;
-  --hc-toast-success: rgb(15, 118, 110);
-  --hc-toast-error: rgb(220, 38, 38);
+  --hc-toast-success: rgba(15, 118, 110, 0.95);
+  --hc-toast-error: rgba(220, 38, 38, 0.95);
   --hc-footer-text: #94a3b8;
   --hc-url-chip-bg: #ffffff;
   --hc-url-chip-hover: #f8fafc;
@@ -49,8 +49,8 @@ body.hc-theme-dark {
   --hc-toggle-bg: #1a253a;
   --hc-toggle-active-bg: #25324b;
   --hc-input-bg: #1c2a42;
-  --hc-toast-success: rgb(16, 185, 129);
-  --hc-toast-error: rgb(248, 113, 113);
+  --hc-toast-success: rgba(16, 185, 129, 0.95);
+  --hc-toast-error: rgba(248, 113, 113, 0.95);
   --hc-footer-text: #9fb3d6;
   --hc-url-chip-bg: #1f2b44;
   --hc-url-chip-hover: #243152;
