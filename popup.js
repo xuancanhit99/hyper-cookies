@@ -114,7 +114,7 @@ const translations = {
     themeToggleDark: 'Chuyển sang giao diện tối',
     themeToggleLight: 'Chuyển sang giao diện sáng',
     languageToggle: 'Chuyển ngôn ngữ',
-    autoReloadLabel: 'Tự làm mới trang sau khi import JSON',
+    autoReloadLabel: 'Tự động làm mới trang sau khi import JSON',
     updateCookieSuccess: 'Đã cập nhật cookie',
     updateStorageSuccess: 'Đã cập nhật local storage',
     updateErrorGeneric: 'Không thể cập nhật giá trị',
