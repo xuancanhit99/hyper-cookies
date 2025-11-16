@@ -62,12 +62,18 @@
           <img src="images/drive.svg" alt="" class="hc-btn-icon hc-btn-icon-img" aria-hidden="true">
           <span id="import-drive-label" data-i18n="importDrive">Import từ Google Drive</span>
         </button>
-        <input type="file" id="import-file" accept="application/json" hidden>
+        <input type="file" id="import-file" accept=".json,application/json" hidden>
       </div>
       <div class="hc-option-row">
         <label class="hc-checkbox">
           <input type="checkbox" id="auto-reload-checkbox">
           <span data-i18n="autoReloadLabel">Tự làm mới trang sau khi import</span>
+        </label>
+      </div>
+      <div class="hc-option-row">
+        <label class="hc-checkbox">
+          <input type="checkbox" id="base64-export-checkbox">
+          <span data-i18n="base64ExportLabel">Mã hóa Base64 khi export</span>
         </label>
       </div>
     </section>

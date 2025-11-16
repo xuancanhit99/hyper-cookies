@@ -26,6 +26,9 @@ const copyUrlBtn = document.getElementById('copy-url-btn');
 const themeToggleBtn = document.getElementById('theme-toggle');
 const languageToggleBtn = document.getElementById('language-toggle');
 const autoReloadCheckbox = document.getElementById('auto-reload-checkbox');
+const base64ExportCheckbox = document.getElementById('base64-export-checkbox');
+const exportJsonLabelEl = document.getElementById('export-json-label');
+const importJsonLabelEl = document.getElementById('import-json-label');
 
 activeDomainLabel.dataset.domainSet = 'false';
 
@@ -35,9 +38,11 @@ const VIEW_STORAGE = 'storage';
 const LANGUAGE_STORAGE_KEY = 'hyper-cookie:language';
 const THEME_STORAGE_KEY = 'hyper-cookie:theme';
 const AUTO_RELOAD_KEY = 'hyper-cookie:auto-reload';
+const BASE64_EXPORT_KEY = 'hyper-cookie:base64-export';
 const DEFAULT_LANGUAGE = 'vi';
 const DEFAULT_THEME = 'dark';
 const DEFAULT_AUTO_RELOAD = true;
+const DEFAULT_BASE64_EXPORT = true;
 const FLAG_BY_LANG = {
   vi: {
     src: 'images/vn.svg',
@@ -57,7 +62,9 @@ const translations = {
     tabStorage: 'Bộ nhớ',
     urlLabel: 'URL',
     exportJson: 'Export JSON',
+    exportTxt: 'Export TXT',
     importJson: 'Import JSON',
+    importTxt: 'Import TXT',
     importDrive: 'Import từ Google Drive',
     importDriveModalTitle: 'Import từ Google Drive',
     importDriveModalDescription: 'Dán link chia sẻ file JSON trên Google Drive để bắt đầu import.',
@@ -68,6 +75,7 @@ const translations = {
     importDriveStart: 'Import',
     cancel: 'Huỷ',
     closeModal: 'Đóng',
+    base64ExportLabel: 'Mã hóa khi export',
     cookiesColumnName: 'Tên',
     cookiesColumnDomain: 'Domain',
     cookiesColumnExpiry: 'Hết hạn',
@@ -114,7 +122,7 @@ const translations = {
     themeToggleDark: 'Chuyển sang giao diện tối',
     themeToggleLight: 'Chuyển sang giao diện sáng',
     languageToggle: 'Chuyển ngôn ngữ',
-    autoReloadLabel: 'Tự động làm mới trang sau khi import JSON',
+    autoReloadLabel: 'Tự động làm mới trang sau khi import',
     updateCookieSuccess: 'Đã cập nhật cookie',
     updateStorageSuccess: 'Đã cập nhật local storage',
     updateErrorGeneric: 'Không thể cập nhật giá trị',
@@ -130,7 +138,9 @@ const translations = {
     tabStorage: 'Local Storage',
     urlLabel: 'URL',
     exportJson: 'Export JSON',
+    exportTxt: 'Export TXT',
     importJson: 'Import JSON',
+    importTxt: 'Import TXT',
     importDrive: 'Import from Google Drive',
     importDriveModalTitle: 'Import from Google Drive',
     importDriveModalDescription: 'Paste the shared JSON link from Google Drive to import.',
@@ -141,6 +151,7 @@ const translations = {
     importDriveStart: 'Import',
     cancel: 'Cancel',
     closeModal: 'Close',
+    base64ExportLabel: 'Encode export',
     cookiesColumnName: 'Name',
     cookiesColumnDomain: 'Domain',
     cookiesColumnExpiry: 'Expires',
@@ -187,7 +198,7 @@ const translations = {
     themeToggleDark: 'Switch to dark theme',
     themeToggleLight: 'Switch to light theme',
     languageToggle: 'Switch language',
-    autoReloadLabel: 'Refresh tab after import JSON',
+    autoReloadLabel: 'Refresh tab after import',
     updateCookieSuccess: 'Cookie updated',
     updateStorageSuccess: 'Local storage updated',
     updateErrorGeneric: 'Unable to update value',
@@ -205,6 +216,7 @@ let activeTab = null;
 let currentLanguage = DEFAULT_LANGUAGE;
 let currentTheme = DEFAULT_THEME;
 let autoReloadEnabled = DEFAULT_AUTO_RELOAD;
+let base64ExportEnabled = DEFAULT_BASE64_EXPORT;
 
 document.addEventListener('DOMContentLoaded', init);
 refreshBtn.addEventListener('click', loadActiveData);
@@ -242,7 +254,10 @@ if (languageToggleBtn) {
   languageToggleBtn.addEventListener('click', toggleLanguage);
 }
 if (autoReloadCheckbox) {
-  autoReloadCheckbox.addEventListener('change', handleAutoReloadChange);
+autoReloadCheckbox.addEventListener('change', handleAutoReloadChange);
+if (base64ExportCheckbox) {
+  base64ExportCheckbox.addEventListener('change', handleBase64ExportChange);
+}
 }
 
 async function init() {
@@ -268,12 +283,21 @@ async function loadPreferences() {
     } else {
       autoReloadEnabled = DEFAULT_AUTO_RELOAD;
     }
+    if (typeof stored?.[BASE64_EXPORT_KEY] === 'boolean') {
+      base64ExportEnabled = stored[BASE64_EXPORT_KEY];
+    } else {
+      base64ExportEnabled = DEFAULT_BASE64_EXPORT;
+    }
   } catch (error) {
     console.warn('Hyper Cookie: cannot load preferences', error);
   }
   if (autoReloadCheckbox) {
     autoReloadCheckbox.checked = autoReloadEnabled;
   }
+  if (base64ExportCheckbox) {
+    base64ExportCheckbox.checked = base64ExportEnabled;
+  }
+  updateExportImportLabels();
 }
 
 function getFromStorage(keys) {
@@ -525,8 +549,13 @@ async function exportData() {
       cookies: cookiesResponse.cookies || [],
       localStorage: storageResponse.entries || []
     };
-    const filename = `hyper-cookie-export-${exportPayload.sourceHostname || 'data'}.json`;
-    downloadJSON(exportPayload, filename);
+    const filenameBase = `hyper-cookie-export-${exportPayload.sourceHostname || 'data'}`;
+    if (base64ExportEnabled) {
+      const encoded = wrapPayloadWithBase64(exportPayload);
+      downloadText(encoded, `${filenameBase}-encoded.txt`);
+    } else {
+      downloadJSON(exportPayload, `${filenameBase}.json`);
+    }
     showToast(t('exportSuccess'));
   } catch (error) {
     console.error(error);
@@ -541,7 +570,7 @@ async function handleImportFile(event) {
   if (!file) return;
   try {
     const text = await file.text();
-    const payload = JSON.parse(text);
+    const payload = parseImportText(text);
     await processImportedPayload(payload);
   } catch (error) {
     console.error(error);
@@ -551,7 +580,8 @@ async function handleImportFile(event) {
   }
 }
 
-async function processImportedPayload(payload) {
+async function processImportedPayload(rawPayload) {
+  const payload = decodeExportEnvelope(rawPayload);
   validateImportPayload(payload);
   const sourceHost = payload.sourceHostname || safeHostname(payload.sourceUrl);
   const currentHost = safeHostname(activeTab?.url || targetUrlInput.value);
@@ -645,11 +675,7 @@ async function fetchDrivePayload(url) {
     throw new Error(t('importDriveFetchError', { error: response.statusText || response.status }));
   }
   const text = await response.text();
-  try {
-    return JSON.parse(text);
-  } catch (error) {
-    throw new Error(t('validatePayloadInvalid'));
-  }
+  return parseImportText(text);
 }
 
 function setDriveImportLoading(isLoading) {
@@ -661,6 +687,69 @@ function setDriveImportLoading(isLoading) {
   }
   if (driveUrlInput) {
     driveUrlInput.disabled = isLoading;
+  }
+}
+
+function wrapPayloadWithBase64(payload) {
+  const jsonString = JSON.stringify(payload);
+  return encodeStringToBase64(jsonString);
+}
+
+function decodeExportEnvelope(rawPayload) {
+  if (typeof rawPayload === 'string') {
+    return parseEncodedPayload(rawPayload);
+  }
+  return rawPayload;
+}
+
+function encodeStringToBase64(str) {
+  try {
+    const encoder = new TextEncoder();
+    const bytes = encoder.encode(str);
+    let binary = '';
+    bytes.forEach(byte => {
+      binary += String.fromCharCode(byte);
+    });
+    return btoa(binary);
+  } catch (error) {
+    return btoa(unescape(encodeURIComponent(str)));
+  }
+}
+
+function decodeBase64ToString(encoded) {
+  try {
+    const binary = atob(encoded);
+    const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+    const decoder = new TextDecoder();
+    return decoder.decode(bytes);
+  } catch (error) {
+    return decodeURIComponent(
+      atob(encoded)
+        .split('')
+        .map(char => `%${char.charCodeAt(0).toString(16).padStart(2, '0')}`)
+        .join('')
+    );
+  }
+}
+
+function parseEncodedPayload(encodedText) {
+  try {
+    const decodedString = decodeBase64ToString(encodedText.trim());
+    return JSON.parse(decodedString);
+  } catch (error) {
+    throw new Error(t('validatePayloadInvalid'));
+  }
+}
+
+function parseImportText(text) {
+  const trimmed = (text || '').trim();
+  if (!trimmed) {
+    throw new Error(t('validatePayloadInvalid'));
+  }
+  try {
+    return JSON.parse(trimmed);
+  } catch (error) {
+    return trimmed;
   }
 }
 
@@ -691,6 +780,18 @@ function buildDriveDownloadUrl(input) {
 
 function downloadJSON(data, filename) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function downloadText(content, filename) {
+  const blob = new Blob([content], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
@@ -1019,6 +1120,7 @@ function applyTranslations() {
   }
   updateLanguageToggle();
   updateThemeToggleIcon();
+  updateExportImportLabels();
 }
 
 function applyTheme() {
@@ -1062,6 +1164,31 @@ function updateLanguageToggle() {
 function handleAutoReloadChange(event) {
   autoReloadEnabled = Boolean(event.target.checked);
   savePreference(AUTO_RELOAD_KEY, autoReloadEnabled);
+}
+
+function handleBase64ExportChange(event) {
+  base64ExportEnabled = Boolean(event.target.checked);
+  savePreference(BASE64_EXPORT_KEY, base64ExportEnabled);
+  updateExportImportLabels();
+}
+
+function updateExportImportLabels() {
+  const exportKey = base64ExportEnabled ? 'exportTxt' : 'exportJson';
+  const importKey = base64ExportEnabled ? 'importTxt' : 'importJson';
+  if (exportJsonLabelEl) {
+    exportJsonLabelEl.dataset.i18n = exportKey;
+    exportJsonLabelEl.textContent = t(exportKey);
+  }
+  if (importJsonLabelEl) {
+    importJsonLabelEl.dataset.i18n = importKey;
+    importJsonLabelEl.textContent = t(importKey);
+  }
+  if (importFileInput) {
+    importFileInput.setAttribute(
+      'accept',
+      base64ExportEnabled ? '.txt,text/plain' : '.json,application/json'
+    );
+  }
 }
 
 function parseExpiryInput(input) {
