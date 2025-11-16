@@ -101,6 +101,16 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       });
     return true;
   }
+
+  if (message.type === 'CLEAR_ALL_DATA') {
+    clearAllData(message.payload)
+      .then(result => sendResponse(result))
+      .catch(error => {
+        console.error('Hyper Cookies: error clearing data', error);
+        sendResponse({ error: error.message });
+      });
+    return true;
+  }
 });
 
 async function handleGetCookies({ url }) {
@@ -330,3 +340,43 @@ async function renameLocalStorageKey({ tabId, oldKey, newKey }) {
   }
   return { ok: true, value: result.result?.value };
 }
+
+async function clearAllData({ url, tabId }) {
+  if (!url) throw new Error('URL khng h?p l?');
+  if (!tabId) throw new Error('Tab ID khng h?p l?');
+
+  const cookies = await chrome.cookies.getAll({ url });
+  let removedCookies = 0;
+  for (const cookie of cookies) {
+    try {
+      const cookieUrl = buildCookieUrl(cookie, url);
+      if (!cookieUrl) continue;
+      await chrome.cookies.remove({
+        url: cookieUrl,
+        name: cookie.name,
+        storeId: cookie.storeId
+      });
+      removedCookies += 1;
+    } catch (error) {
+      console.warn('Hyper Cookies: failed to remove cookie while clearing', cookie.name, error);
+    }
+  }
+
+  const [result] = await chrome.scripting.executeScript({
+    target: { tabId },
+    func: () => {
+      try {
+        localStorage.clear();
+        return { cleared: true };
+      } catch (error) {
+        return { error: error.message };
+      }
+    }
+  });
+
+  if (!result) throw new Error('Khng th? xa local storage');
+  if (result.result?.error) throw new Error(result.result.error);
+
+  return { ok: true, removedCookies, clearedStorage: true };
+}
+

@@ -795,3 +795,25 @@ td {
   background: var(--hc-border);
   margin: 4px 0;
 }
+#clear-all-btn { border-radius: 0; }
+#clear-all-btn:hover { border-radius: 0; }
+#clear-all-btn:active { border-radius: 0; }
+
+.hc-url-chip-divider {
+  width: 1px;
+  align-self: stretch;
+  background: var(--hc-border);
+  opacity: 0.8;
+}
+
+#clear-all-btn {
+  border-radius: 0;
+}
+
+.hc-url-chip-divider {
+  width: 1px;
+  height: 28px;
+  background: var(--hc-border-strong);
+  opacity: 0.9;
+  align-self: center;
+}

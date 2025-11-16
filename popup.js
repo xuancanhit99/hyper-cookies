@@ -22,6 +22,7 @@ const driveUrlInput = document.getElementById('drive-import-url');
 const driveCancelBtn = document.getElementById('drive-import-cancel');
 const driveSubmitBtn = document.getElementById('drive-import-submit');
 const driveCloseBtn = document.getElementById('drive-import-close');
+const clearAllBtn = document.getElementById('clear-all-btn');
 const copyUrlBtn = document.getElementById('copy-url-btn');
 const themeToggleBtn = document.getElementById('theme-toggle');
 const languageToggleBtn = document.getElementById('language-toggle');
@@ -75,6 +76,10 @@ const translations = {
     importDriveStart: 'Import',
     cancel: 'Huỷ',
     closeModal: 'Đóng',
+    clearAllTitle: 'Xóa cookies & local storage',
+    clearAllConfirm: 'Xóa tất cả cookies và local storage của trang này?',
+    clearAllSuccess: 'Đã xóa cookies và local storage',
+    clearAllError: 'Xóa thất bại: {{error}}',
     base64ExportLabel: 'Mã hóa khi export',
     cookiesColumnName: 'Tên',
     cookiesColumnDomain: 'Domain',
@@ -151,6 +156,10 @@ const translations = {
     importDriveStart: 'Import',
     cancel: 'Cancel',
     closeModal: 'Close',
+    clearAllTitle: 'Clear cookies & local storage',
+    clearAllConfirm: 'Clear all cookies and local storage for this page?',
+    clearAllSuccess: 'All cookies and local storage cleared',
+    clearAllError: 'Clear failed: {{error}}',
     base64ExportLabel: 'Encode export',
     cookiesColumnName: 'Name',
     cookiesColumnDomain: 'Domain',
@@ -228,6 +237,9 @@ importJsonBtn.addEventListener('click', () => importFileInput.click());
 importFileInput.addEventListener('change', handleImportFile);
 if (importDriveBtn) {
   importDriveBtn.addEventListener('click', openDriveImportModal);
+}
+if (clearAllBtn) {
+  clearAllBtn.addEventListener('click', handleClearAll);
 }
 if (driveForm) {
   driveForm.addEventListener('submit', handleDriveImportSubmit);
@@ -1055,6 +1067,34 @@ function openInlineEditor(cell, initialValue, onSave) {
   });
 }
 
+async function handleClearAll() {
+  const url = targetUrlInput.value.trim();
+  if (!url) {
+    showToast(t('enterValidUrl'), true);
+    return;
+  }
+  if (!activeTab?.id) {
+    showToast(t('unknownTab'), true);
+    return;
+  }
+  const confirmed = confirm(t('clearAllConfirm'));
+  if (!confirmed) return;
+  try {
+    const response = await chrome.runtime.sendMessage({
+      type: 'CLEAR_ALL_DATA',
+      payload: { url, tabId: activeTab.id }
+    });
+    if (response?.error) {
+      throw new Error(response.error);
+    }
+    showToast(t('clearAllSuccess'));
+    await loadActiveData();
+  } catch (error) {
+    console.error('Clear all failed', error);
+    showToast(t('clearAllError', { error: formatError(error) }), true);
+  }
+}
+
 async function copyUrlToClipboard() {
   const url = targetUrlInput.value.trim();
   if (!url) {
@@ -1234,3 +1274,5 @@ function t(key, vars = {}) {
 function formatError(error) {
   return error?.message || String(error);
 }
+
+
