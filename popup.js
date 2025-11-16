@@ -227,11 +227,6 @@ if (driveCloseBtn) {
   driveCloseBtn.addEventListener('click', closeDriveImportModal);
 }
 if (driveModal) {
-  driveModal.addEventListener('click', event => {
-    if (event.target === driveModal) {
-      closeDriveImportModal();
-    }
-  });
   document.addEventListener('keydown', event => {
     if (event.key === 'Escape' && driveModal.classList.contains('open')) {
       event.preventDefault();

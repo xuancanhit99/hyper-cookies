@@ -568,16 +568,6 @@ td {
   z-index: 1200;
 }
 
-.hc-modal::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  margin: auto;
-  max-width: 420px;
-  max-height: 240px;
-  border-radius: 20px;
-}
-
 .hc-modal.open {
   display: flex;
 }
