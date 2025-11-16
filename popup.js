@@ -35,10 +35,10 @@ activeDomainLabel.dataset.domainSet = 'false';
 const VIEW_HOME = 'home';
 const VIEW_COOKIES = 'cookies';
 const VIEW_STORAGE = 'storage';
-const LANGUAGE_STORAGE_KEY = 'hyper-cookie:language';
-const THEME_STORAGE_KEY = 'hyper-cookie:theme';
-const AUTO_RELOAD_KEY = 'hyper-cookie:auto-reload';
-const BASE64_EXPORT_KEY = 'hyper-cookie:base64-export';
+const LANGUAGE_STORAGE_KEY = 'hyper-cookies:language';
+const THEME_STORAGE_KEY = 'hyper-cookies:theme';
+const AUTO_RELOAD_KEY = 'hyper-cookies:auto-reload';
+const BASE64_EXPORT_KEY = 'hyper-cookies:base64-export';
 const DEFAULT_LANGUAGE = 'vi';
 const DEFAULT_THEME = 'dark';
 const DEFAULT_AUTO_RELOAD = true;
@@ -549,7 +549,7 @@ async function exportData() {
       cookies: cookiesResponse.cookies || [],
       localStorage: storageResponse.entries || []
     };
-    const filenameBase = `hyper-cookie-export-${exportPayload.sourceHostname || 'data'}`;
+    const filenameBase = `hyper-cookies-export-${exportPayload.sourceHostname || 'data'}`;
     if (base64ExportEnabled) {
       const encoded = wrapPayloadWithBase64(exportPayload);
       downloadText(encoded, `${filenameBase}-encoded.txt`);

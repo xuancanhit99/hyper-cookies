@@ -1,6 +1,6 @@
 // Service worker cho Hyper Cookies
 
-const COOKIE_CACHE_KEY = 'hyper-cookie:last-domain';
+const COOKIE_CACHE_KEY = 'hyper-cookies:last-domain';
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_COOKIES') {
