@@ -542,7 +542,7 @@ td {
   filter: blur(1px);
   transform: translateX(-130%);
   opacity: 0;
-  animation: hc-divider-shine 6s ease-in-out infinite;
+  animation: hc-divider-shine 6s linear infinite;
 }
 
 .hc-theme-dark .hc-footer-divider {
@@ -563,14 +563,15 @@ td {
     opacity: 0;
   }
   70% {
+    transform: translateX(-130%);
     opacity: 1;
   }
-  90% {
-    transform: translateX(220%);
-    opacity: 0;
+  99% {
+    transform: translateX(360%);
+    opacity: 1;
   }
   100% {
-    transform: translateX(220%);
+    transform: translateX(360%);
     opacity: 0;
   }
 }
