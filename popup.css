@@ -526,7 +526,7 @@ td {
   height: 2px;
   width: calc(100% + 24px);
   border-radius: 999px;
-  margin: 8px -12px 4px;
+  margin: 8px -12px 0;
   background-color: rgba(148, 163, 184, 0.45);
   overflow: hidden;
 }
