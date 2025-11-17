@@ -39,13 +39,13 @@ body {
 }
 
 .hc-config-blocker {
-  position: absolute;
+  position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.8);
   display: none;
   align-items: center;
   justify-content: center;
-  z-index: 20;
+  z-index: 1300;
 }
 
 .hc-config-blocker[data-hidden='false'] {
@@ -78,11 +78,23 @@ body {
   color: var(--hc-muted);
 }
 
+.hc-blocker-card .hc-blocker-highlight {
+  font-weight: 700;
+  color: var(--hc-text);
+  font-size: 14px;
+}
+
 .hc-blocker-actions {
   display: flex;
   gap: 8px;
   justify-content: center;
   flex-wrap: wrap;
+}
+
+.hc-blocker-actions .hc-btn {
+  text-decoration: none;
+  flex: 1 1 160px;
+  justify-content: center;
 }
 
 .hc-config-blocker [data-hidden='true'] {
@@ -126,6 +138,8 @@ body.hc-theme-dark {
   color: var(--hc-muted);
   margin: -6px 0 8px;
   text-align: right;
+  cursor: pointer;
+  text-decoration: underline dotted;
 }
 
 .hc-pro-key-note [data-hidden='true'] {
@@ -233,6 +247,12 @@ button:disabled {
   border: none;
   font-size: 13px;
   transition: transform 120ms ease, box-shadow 120ms ease, background 150ms ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
 .hc-btn:disabled {
@@ -274,13 +294,11 @@ button:disabled {
 
 .hc-btn-icon {
   display: inline-flex;
-  align-items: flex-start;
+  align-items: center;
   justify-content: center;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1;
   vertical-align: middle;
-  position: relative;
-  top: 0;
 }
 
 .hc-btn-icon-img {
@@ -679,7 +697,7 @@ td {
   bottom: 12px;
   left: 12px;
   right: 12px;
-  z-index: 1000;
+  z-index: 1500;
   padding: 10px 12px;
   background: var(--hc-toast-success);
   color: #fff;
@@ -704,7 +722,7 @@ td {
   align-items: center;
   justify-content: center;
   background: rgba(15, 23, 42, 0.55);
-  z-index: 1200;
+  z-index: 1400;
 }
 
 .hc-modal.open {
@@ -747,6 +765,12 @@ td {
   font-size: 13px;
   color: var(--hc-muted);
   margin: 0 0 14px;
+  line-height: 1.5;
+}
+
+.hc-modal-description p {
+  margin: 0 0 8px;
+  padding: 0 4px;
 }
 
 .hc-modal-form {

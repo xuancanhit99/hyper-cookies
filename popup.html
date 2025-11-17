@@ -47,19 +47,19 @@
         <div class="hc-blocker-icon">
           <span class="material-symbols-rounded" aria-hidden="true">error</span>
         </div>
-        <p id="config-blocker-message">Không thể tải cấu hình.</p>
+        <p id="config-blocker-message" class="hc-blocker-highlight">Không thể tải cấu hình.</p>
         <div class="hc-blocker-actions">
           <a id="config-update-link" class="hc-btn hc-btn-primary" href="#" target="_blank" rel="noopener" data-hidden="true">
-            <span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>
-            <span data-i18n="updateRequired">Yêu cầu cập nhật</span>
-          </a>
-          <button type="button" id="config-master-btn" class="hc-btn hc-btn-amber">
-            <span class="material-symbols-rounded" aria-hidden="true">lock_open_right</span>
-            <span data-i18n="proToggleEnable">Mở khóa Pro</span>
-          </button>
-        </div>
+          <span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>
+          <span data-i18n="updateRequired">Yêu cầu cập nhật</span>
+        </a>
+        <button type="button" id="config-master-btn" class="hc-btn hc-btn-amber">
+          <span class="material-symbols-rounded" aria-hidden="true">password</span>
+          <span data-i18n="proToggleEnable">Mở khóa Pro</span>
+        </button>
       </div>
     </div>
+  </div>
 
     <div class="hc-toggle">
       <button id="home-tab" class="active" data-i18n="tabHome">Trang chủ</button>
@@ -217,7 +217,7 @@
       <div class="hc-modal-header">
         <h2 id="pro-code-title">
           <span class="material-symbols-rounded" aria-hidden="true">crown</span>
-          <span data-i18n="proCodeTitle">Nhập mã Pro</span>
+          <span data-i18n="proCodeTitle">Kích hoạt Pro</span>
         </h2>
         <button type="button" class="hc-icon-btn hc-modal-close" id="pro-code-close" aria-label="Close" data-i18n-aria-label="closeModal" data-i18n-title="closeModal">
           <span class="material-symbols-rounded" aria-hidden="true">close</span>
@@ -228,8 +228,7 @@
       </p>
       <form id="pro-code-form" class="hc-modal-form">
         <label class="hc-modal-field" for="pro-code-input">
-          <span data-i18n="proCodeLabel">Mã kích hoạt</span>
-          <input type="text" id="pro-code-input" placeholder="Nhập mã" required data-i18n-placeholder="proCodePlaceholder">
+          <input type="text" id="pro-code-input" placeholder="Nhập mã kích hoạt" required data-i18n-placeholder="proCodePlaceholder">
         </label>
         <div class="hc-modal-actions">
           <button type="button" class="hc-btn hc-btn-ghost" id="pro-code-cancel" data-i18n="cancel">Huỷ</button>
@@ -239,6 +238,29 @@
           </button>
         </div>
       </form>
+    </div>
+  </div>
+
+  <div id="pro-info-modal" class="hc-modal" aria-hidden="true">
+    <div class="hc-modal-content" role="dialog" aria-modal="true" aria-labelledby="pro-info-title">
+      <div class="hc-modal-header">
+        <h2 id="pro-info-title">
+          <span class="material-symbols-rounded" aria-hidden="true">info</span>
+          <span data-i18n="proInfoTitle">Thông tin kích hoạt Pro</span>
+        </h2>
+        <button type="button" class="hc-icon-btn hc-modal-close" id="pro-info-close" aria-label="Close" data-i18n-aria-label="closeModal" data-i18n-title="closeModal">
+          <span class="material-symbols-rounded" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <div class="hc-modal-description" id="pro-info-details"></div>
+      <div class="hc-modal-actions">
+        <button type="button" class="hc-btn hc-btn-ghost" id="pro-info-clear">
+          <span data-i18n="proInfoClear">Xóa key Pro</span>
+        </button>
+        <button type="button" class="hc-btn hc-btn-primary" id="pro-info-new-key">
+          <span data-i18n="proInfoNewKey">Nhập key mới</span>
+        </button>
+      </div>
     </div>
   </div>
 

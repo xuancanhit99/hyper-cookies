@@ -38,6 +38,11 @@ const configMasterBtn = document.getElementById('config-master-btn');
 const configLoadingOverlay = document.getElementById('config-loading');
 const proKeyNote = document.getElementById('pro-key-note');
 const proCodeModal = document.getElementById('pro-code-modal');
+const proInfoModal = document.getElementById('pro-info-modal');
+const proInfoDetails = document.getElementById('pro-info-details');
+const proInfoCloseBtn = document.getElementById('pro-info-close');
+const proInfoClearBtn = document.getElementById('pro-info-clear');
+const proInfoNewKeyBtn = document.getElementById('pro-info-new-key');
 const proCodeForm = document.getElementById('pro-code-form');
 const proCodeInput = document.getElementById('pro-code-input');
 const proCodeCancelBtn = document.getElementById('pro-code-cancel');
@@ -96,10 +101,10 @@ const translations = {
     importDriveModalDescription: 'Dán link chia sẻ file TXT/JSON trên Google Drive để bắt đầu import.',
     importDriveLinkLabel: 'Link Google Drive',
     importDrivePlaceholder: 'https://drive.google.com/...',
-    proCodeTitle: 'Nhập mã Pro',
-    proCodeDescription: 'Nhập mã Pro hoặc master password (dùng khi mất kết nối cấu hình).',
-    proCodeLabel: 'Mã kích hoạt',
-    proCodePlaceholder: 'Nhập mã',
+    proCodeTitle: 'Kích hoạt Pro',
+    proCodeDescription: 'Nhập mã để kích hoạt phiên bản Pro mở khoá các tính năng nâng cao.',
+    proCodeLabel: '',
+    proCodePlaceholder: 'Nhập mã kích hoạt',
     proCodeSubmit: 'Mở khóa',
     proCodeInvalid: 'Mã không hợp lệ',
     proCodeExpired: 'Mã đã hết hạn',
@@ -108,7 +113,7 @@ const translations = {
     configLoadError: 'Không tải được cấu hình: {{error}}',
     configDisabled: 'Extension đang bị tắt. {{message}}',
     updateRequired: 'Yêu cầu cập nhật',
-    updateRequiredDescription: 'Cần cập nhật lên {{required}} (hiện tại {{current}}).',
+    updateRequiredDescription: 'Cần cập nhật Hyper Cookies lên {{required}} (hiện tại {{current}}).',
     importDriveUrlMissing: 'Nhập link Google Drive hợp lệ',
     importDriveFetchError: 'Không thể tải file: {{error}}',
     importDriveStart: 'Import',
@@ -179,7 +184,14 @@ const translations = {
     proKeyInfoName: 'Tên: {{name}}',
     proKeyInfoEmail: 'Email: {{email}}',
     proKeyInfoExpiry: 'Hết hạn: {{date}}',
-    proKeyInfoMaster: 'Đang dùng master password'
+    proKeyInfoMaster: 'Đang dùng master password',
+    proInfoNameLabel: 'Họ tên',
+    proInfoEmailLabel: 'Email',
+    proInfoKeyLabel: 'Key',
+    proInfoHostsLabel: 'Hosts',
+    proInfoTitle: 'Thông tin kích hoạt Pro',
+    proInfoClear: 'Xóa key Pro',
+    proInfoNewKey: 'Nhập key mới'
   },
   en: {
     loadingDomain: 'Loading...',
@@ -196,10 +208,10 @@ const translations = {
     importDriveModalDescription: 'Paste the shared TXT/JSON link from Google Drive to import.',
     importDriveLinkLabel: 'Google Drive link',
     importDrivePlaceholder: 'https://drive.google.com/...',
-    proCodeTitle: 'Enter Pro code',
-    proCodeDescription: 'Enter Pro code or master password (offline fallback).',
-    proCodeLabel: 'Activation code',
-    proCodePlaceholder: 'Enter code',
+    proCodeTitle: 'Activate Pro',
+    proCodeDescription: 'Enter a code to activate Pro.',
+    proCodeLabel: '',
+    proCodePlaceholder: 'Enter activation code',
     proCodeSubmit: 'Unlock',
     proCodeInvalid: 'Invalid code',
     proCodeExpired: 'Code expired',
@@ -208,7 +220,7 @@ const translations = {
     configLoadError: 'Cannot load config: {{error}}',
     configDisabled: 'Extension is disabled. {{message}}',
     updateRequired: 'Update required',
-    updateRequiredDescription: 'Need version {{required}} (current {{current}}).',
+    updateRequiredDescription: 'Update Hyper Cookies to {{required}} (current {{current}}).',
     importDriveUrlMissing: 'Enter a Google Drive link',
     importDriveFetchError: 'Unable to fetch file: {{error}}',
     importDriveStart: 'Import',
@@ -279,7 +291,14 @@ const translations = {
     proKeyInfoName: 'Name: {{name}}',
     proKeyInfoEmail: 'Email: {{email}}',
     proKeyInfoExpiry: 'Expires: {{date}}',
-    proKeyInfoMaster: 'Using master password'
+    proKeyInfoMaster: 'Using master password',
+    proInfoNameLabel: 'Full name',
+    proInfoEmailLabel: 'Email',
+    proInfoKeyLabel: 'Key',
+    proInfoHostsLabel: 'Hosts',
+    proInfoTitle: 'Pro activation info',
+    proInfoClear: 'Remove Pro key',
+    proInfoNewKey: 'Enter new key'
   }
 };
 
@@ -339,7 +358,7 @@ if (languageToggleBtn) {
   languageToggleBtn.addEventListener('click', toggleLanguage);
 }
 if (proToggleBtn) {
-  proToggleBtn.addEventListener('click', openProCodeModal);
+  proToggleBtn.addEventListener('click', openProInfoModal);
 }
 if (autoReloadCheckbox) {
   autoReloadCheckbox.addEventListener('change', handleAutoReloadChange);
@@ -359,11 +378,27 @@ if (proCodeCancelBtn) {
 if (proCodeCloseBtn) {
   proCodeCloseBtn.addEventListener('click', closeProCodeModal);
 }
-if (proCodeModal) {
+if (proInfoCloseBtn) {
+  proInfoCloseBtn.addEventListener('click', closeProInfoModal);
+}
+if (proInfoClearBtn) {
+  proInfoClearBtn.addEventListener('click', handleClearProKey);
+}
+if (proInfoNewKeyBtn) {
+  proInfoNewKeyBtn.addEventListener('click', () => {
+    closeProInfoModal();
+    openProCodeModal();
+  });
+}
+if (proCodeModal || proInfoModal) {
   document.addEventListener('keydown', event => {
-    if (event.key === 'Escape' && proCodeModal.classList.contains('open')) {
+    if (event.key === 'Escape' && proCodeModal?.classList.contains('open')) {
       event.preventDefault();
       closeProCodeModal();
+    }
+    if (event.key === 'Escape' && proInfoModal?.classList.contains('open')) {
+      event.preventDefault();
+      closeProInfoModal();
     }
   });
 }
@@ -1012,6 +1047,7 @@ function setDriveImportLoading(isLoading) {
 
 function openProCodeModal() {
   if (!proCodeModal) return;
+  closeProInfoModal();
   proCodeModal.classList.add('open');
   proCodeModal.setAttribute('aria-hidden', 'false');
   setProCodeLoading(false);
@@ -1026,6 +1062,67 @@ function closeProCodeModal() {
   if (proCodeForm) {
     proCodeForm.reset();
   }
+}
+
+function openProInfoModal() {
+  if (!proEnabled || !proKeyInfo) {
+    openProCodeModal();
+    return;
+  }
+  if (!proInfoModal) return;
+  closeProCodeModal();
+  renderProInfoDetails();
+  proInfoModal.classList.add('open');
+  proInfoModal.setAttribute('aria-hidden', 'false');
+  setTimeout(() => proInfoModal?.focus(), 20);
+}
+
+function closeProInfoModal() {
+  if (!proInfoModal) return;
+  proInfoModal.classList.remove('open');
+  proInfoModal.setAttribute('aria-hidden', 'true');
+}
+
+function renderProInfoDetails() {
+  if (!proInfoDetails) return;
+  const parts = [];
+  if (proKeyInfo?.fullName) {
+    parts.push(
+      `<p><strong>${t('proInfoNameLabel')}:</strong> ${escapeHtml(proKeyInfo.fullName)}</p>`
+    );
+  }
+  if (proKeyInfo?.email) {
+    parts.push(`<p><strong>${t('proInfoEmailLabel')}:</strong> ${escapeHtml(proKeyInfo.email)}</p>`);
+  }
+  if (proKeyInfo?.code) {
+    parts.push(
+      `<p><strong>${t('proInfoKeyLabel')}:</strong> ${escapeHtml(maskCode(proKeyInfo.code))}</p>`
+    );
+  }
+  if (proKeyInfo?.expiresAt) {
+    parts.push(`<p>${t('proKeyInfoExpiry', { date: proKeyInfo.expiresAt })}</p>`);
+  }
+  if (proKeyInfo?.allowedHosts?.length) {
+    const hosts = proKeyInfo.allowedHosts.join(', ');
+    parts.push(`<p><strong>${t('proInfoHostsLabel')}:</strong> ${escapeHtml(hosts)}</p>`);
+  }
+  if (!parts.length) {
+    parts.push(`<p>${t('proKeyInfoMaster')}</p>`);
+  }
+  proInfoDetails.innerHTML = parts.join('');
+}
+
+function handleClearProKey() {
+  proEnabled = false;
+  proKeyInfo = null;
+  masterBypass = false;
+  savePreference(PRO_FEATURES_KEY, proEnabled);
+  savePreference(PRO_INFO_STORAGE_KEY, proKeyInfo);
+  updateProToggle();
+  updateProKeyNote();
+  closeProInfoModal();
+  setActiveView(VIEW_HOME);
+  showToast(t('proKeyCleared') || 'Pro key cleared');
 }
 
 function setProCodeLoading(isLoading) {
@@ -1051,6 +1148,7 @@ async function handleProCodeSubmit(event) {
     savePreference(PRO_INFO_STORAGE_KEY, proKeyInfo);
     updateProToggle();
     updateProKeyNote();
+    renderProInfoDetails();
     updateConfigBlockerUI();
     closeProCodeModal();
     showToast(t('proCodeSuccess'));
@@ -1554,6 +1652,7 @@ function applyTranslations() {
   updateExportImportLabels();
   updateConfigBlockerUI();
   updateProKeyNote();
+  renderProInfoDetails();
 }
 
 function applyTheme() {
@@ -1675,20 +1774,15 @@ function updateProToggle() {
   if (!proToggleBtn) return;
   proToggleBtn.classList.toggle('hc-pro-active', proEnabled);
   proToggleBtn.setAttribute('aria-pressed', String(proEnabled));
-  const label = t(proEnabled ? 'proToggleDisable' : 'proToggleEnable');
+  const label = proEnabled ? formatProKeyNote(proKeyInfo) : t('proToggleEnable');
   proToggleBtn.title = label;
   proToggleBtn.setAttribute('aria-label', label);
 }
 
 function updateProKeyNote() {
   if (!proKeyNote) return;
-  if (!proEnabled || !proKeyInfo) {
-    proKeyNote.dataset.hidden = 'true';
-    proKeyNote.textContent = '';
-    return;
-  }
-  proKeyNote.dataset.hidden = 'false';
-  proKeyNote.textContent = formatProKeyNote(proKeyInfo);
+  proKeyNote.dataset.hidden = 'true';
+  proKeyNote.textContent = '';
 }
 
 function handleAutoReloadChange(event) {
@@ -1771,6 +1865,21 @@ function t(key, vars = {}) {
 
 function formatError(error) {
   return error?.message || String(error);
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function maskCode(code) {
+  const str = String(code ?? '');
+  if (str.length <= 2) return '*'.repeat(str.length);
+  return `${str[0]}${'*'.repeat(Math.max(1, str.length - 2))}${str[str.length - 1]}`;
 }
 
 
