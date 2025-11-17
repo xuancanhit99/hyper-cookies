@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Hyper Cookies",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "Tiện ích nội bộ để xem, sao chép và quản lý cookie ngay trong trình duyệt.",
   "permissions": [
     "cookies",
