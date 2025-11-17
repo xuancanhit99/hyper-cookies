@@ -199,7 +199,8 @@ const translations = {
     proInfoHostsLabel: 'Hosts',
     proInfoTitle: 'Thông tin kích hoạt Pro',
     proInfoClear: 'Xóa key Pro',
-    proInfoNewKey: 'Nhập key mới'
+    proInfoNewKey: 'Nhập key mới',
+    proKeyCleared: 'Đã xóa key Pro'
   },
   en: {
     loadingDomain: 'Loading...',
@@ -314,7 +315,8 @@ const translations = {
     proInfoHostsLabel: 'Hosts',
     proInfoTitle: 'Pro activation info',
     proInfoClear: 'Remove Pro key',
-    proInfoNewKey: 'Enter new key'
+    proInfoNewKey: 'Enter new key',
+    proKeyCleared: 'Pro key removed'
   }
 };
 
@@ -1145,7 +1147,7 @@ function handleClearProKey() {
   updateProKeyNote();
   closeProInfoModal();
   setActiveView(VIEW_HOME);
-  showToast(t('proKeyCleared') || 'Pro key cleared');
+  showToast(t('proKeyCleared'));
 }
 
 function setProCodeLoading(isLoading) {
