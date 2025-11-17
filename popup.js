@@ -1659,9 +1659,9 @@ function formatProKeyNote(info) {
   }
   const parts = [];
   if (info.fullName) {
-    parts.push(t('proKeyInfoName', { name: info.fullName }));
+    parts.push(info.fullName);
   } else if (info.email) {
-    parts.push(t('proKeyInfoEmail', { email: info.email }));
+    parts.push(info.email);
   } else if (info.code) {
     parts.push(info.code);
   }
