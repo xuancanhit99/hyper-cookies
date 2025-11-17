@@ -184,7 +184,7 @@ const translations = {
     proKeyInfoName: 'Tên: {{name}}',
     proKeyInfoEmail: 'Email: {{email}}',
     proKeyInfoExpiry: 'Hết hạn: {{date}}',
-    proKeyInfoMaster: 'Đang dùng master password',
+    proKeyInfoMaster: 'Developer Mode',
     proInfoNameLabel: 'Họ tên',
     proInfoEmailLabel: 'Email',
     proInfoKeyLabel: 'Key',
@@ -291,7 +291,7 @@ const translations = {
     proKeyInfoName: 'Name: {{name}}',
     proKeyInfoEmail: 'Email: {{email}}',
     proKeyInfoExpiry: 'Expires: {{date}}',
-    proKeyInfoMaster: 'Using master password',
+    proKeyInfoMaster: 'Developer Mode',
     proInfoNameLabel: 'Full name',
     proInfoEmailLabel: 'Email',
     proInfoKeyLabel: 'Key',
@@ -1777,6 +1777,10 @@ function updateProToggle() {
   const label = proEnabled ? formatProKeyNote(proKeyInfo) : t('proToggleEnable');
   proToggleBtn.title = label;
   proToggleBtn.setAttribute('aria-label', label);
+  const textEl = proToggleBtn.querySelector('.hc-pro-label');
+  if (textEl) {
+    textEl.textContent = proEnabled ? 'PRO' : 'LITE';
+  }
 }
 
 function updateProKeyNote() {
