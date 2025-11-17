@@ -38,6 +38,57 @@ body {
   color: var(--hc-text);
 }
 
+.hc-config-blocker {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.8);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 20;
+}
+
+.hc-config-blocker[data-hidden='false'] {
+  display: flex;
+}
+
+.hc-blocker-card {
+  background: var(--hc-panel-bg);
+  border: 1px solid var(--hc-border);
+  border-radius: 16px;
+  padding: 16px;
+  max-width: 360px;
+  text-align: center;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.hc-blocker-icon {
+  width: 48px;
+  height: 48px;
+  margin: 0 auto 8px;
+  border-radius: 12px;
+  background: var(--hc-pro);
+  display: grid;
+  place-items: center;
+  color: var(--hc-pro-text);
+}
+
+.hc-blocker-card p {
+  margin: 0 0 12px;
+  color: var(--hc-muted);
+}
+
+.hc-blocker-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.hc-config-blocker [data-hidden='true'] {
+  display: none;
+}
+
 body.hc-theme-dark {
   --hc-text: #e2e8f0;
   --hc-bg: #0b1324;
@@ -67,6 +118,64 @@ body.hc-theme-dark {
   flex: 1;
   display: flex;
   flex-direction: column;
+  position: relative;
+}
+
+.hc-pro-key-note {
+  font-size: 11px;
+  color: var(--hc-muted);
+  margin: -6px 0 8px;
+  text-align: right;
+}
+
+.hc-pro-key-note [data-hidden='true'] {
+  display: none;
+}
+
+.hc-config-loading {
+  position: absolute;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 25;
+}
+
+.hc-config-loading[data-hidden='false'] {
+  display: flex;
+}
+
+.hc-loader {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--hc-panel-bg);
+  border: 2px solid var(--hc-border);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
+}
+
+.hc-loader .material-symbols-rounded {
+  animation: hc-spin 1s linear infinite;
+  color: var(--hc-action);
+}
+
+.hc-loader-text {
+  color: var(--hc-muted);
+  font-size: 12px;
+}
+
+@keyframes hc-spin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
 }
 
 body.hc-view-data {

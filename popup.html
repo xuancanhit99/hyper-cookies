@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
   <link rel="stylesheet" href="popup.css">
 </head>
-<body class="hc-view-home hc-theme-dark">
+<body class="hc-view-home hc-theme-light">
   <div class="hc-content">
     <header class="hc-header">
       <div class="hc-title">
@@ -33,6 +33,33 @@
         </button>
       </div>
     </header>
+    <div id="pro-key-note" class="hc-pro-key-note" data-hidden="true"></div>
+
+    <div id="config-loading" class="hc-config-loading" data-hidden="true" role="status" aria-live="polite">
+      <div class="hc-loader">
+        <span class="material-symbols-rounded" aria-hidden="true">sync</span>
+      </div>
+      <div class="hc-loader-text">Đang tải cấu hình...</div>
+    </div>
+
+    <div id="config-blocker" class="hc-config-blocker" data-hidden="true">
+      <div class="hc-blocker-card">
+        <div class="hc-blocker-icon">
+          <span class="material-symbols-rounded" aria-hidden="true">error</span>
+        </div>
+        <p id="config-blocker-message">Không thể tải cấu hình.</p>
+        <div class="hc-blocker-actions">
+          <a id="config-update-link" class="hc-btn hc-btn-primary" href="#" target="_blank" rel="noopener" data-hidden="true">
+            <span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>
+            <span data-i18n="updateRequired">Yêu cầu cập nhật</span>
+          </a>
+          <button type="button" id="config-master-btn" class="hc-btn hc-btn-amber">
+            <span class="material-symbols-rounded" aria-hidden="true">lock_open_right</span>
+            <span data-i18n="proToggleEnable">Mở khóa Pro</span>
+          </button>
+        </div>
+      </div>
+    </div>
 
     <div class="hc-toggle">
       <button id="home-tab" class="active" data-i18n="tabHome">Trang chủ</button>
@@ -135,11 +162,11 @@
       </tr>
     </template>
 
-    <template id="storage-row-template">
-      <tr class="hc-row">
-        <td class="hc-storage-key" data-label="Key"></td>
-        <td class="hc-storage-value" data-label="Value"></td>
-        <td class="hc-actions">
+      <template id="storage-row-template">
+        <tr class="hc-row">
+          <td class="hc-storage-key" data-label="Key"></td>
+          <td class="hc-storage-value" data-label="Value"></td>
+          <td class="hc-actions">
           <button class="hc-delete" title="Xóa item">
             <span class="material-symbols-rounded">backspace</span>
           </button>
@@ -179,6 +206,36 @@
           <button type="submit" class="hc-btn hc-btn-primary" id="drive-import-submit">
             <span class="hc-btn-icon material-symbols-rounded" aria-hidden="true">cloud_download</span>
             <span data-i18n="importDriveStart">Import</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div id="pro-code-modal" class="hc-modal" aria-hidden="true">
+    <div class="hc-modal-content" role="dialog" aria-modal="true" aria-labelledby="pro-code-title">
+      <div class="hc-modal-header">
+        <h2 id="pro-code-title">
+          <span class="material-symbols-rounded" aria-hidden="true">crown</span>
+          <span data-i18n="proCodeTitle">Nhập mã Pro</span>
+        </h2>
+        <button type="button" class="hc-icon-btn hc-modal-close" id="pro-code-close" aria-label="Close" data-i18n-aria-label="closeModal" data-i18n-title="closeModal">
+          <span class="material-symbols-rounded" aria-hidden="true">close</span>
+        </button>
+      </div>
+      <p class="hc-modal-description" data-i18n="proCodeDescription">
+        Nhập mã Pro hoặc master password (dùng khi mất kết nối cấu hình).
+      </p>
+      <form id="pro-code-form" class="hc-modal-form">
+        <label class="hc-modal-field" for="pro-code-input">
+          <span data-i18n="proCodeLabel">Mã kích hoạt</span>
+          <input type="text" id="pro-code-input" placeholder="Nhập mã" required data-i18n-placeholder="proCodePlaceholder">
+        </label>
+        <div class="hc-modal-actions">
+          <button type="button" class="hc-btn hc-btn-ghost" id="pro-code-cancel" data-i18n="cancel">Huỷ</button>
+          <button type="submit" class="hc-btn hc-btn-primary" id="pro-code-submit">
+            <span class="hc-btn-icon material-symbols-rounded" aria-hidden="true">lock_open_right</span>
+            <span data-i18n="proCodeSubmit">Mở khóa</span>
           </button>
         </div>
       </form>
