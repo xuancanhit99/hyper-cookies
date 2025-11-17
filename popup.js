@@ -552,7 +552,7 @@ async function loadRemoteConfig() {
         required: parsed.versionRequired,
         current: EXTENSION_VERSION
       });
-      configUpdateUrl = parsed.updateUrl || '';
+      configUpdateUrl = 'https://github.com/xuancanhit99/hyper-cookies/releases/';
     }
   } catch (error) {
     console.warn('Hyper Cookies: cannot load remote config', error);
