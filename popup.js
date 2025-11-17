@@ -101,19 +101,27 @@ const translations = {
     importDriveModalDescription: 'Dán link chia sẻ file TXT/JSON trên Google Drive để bắt đầu import.',
     importDriveLinkLabel: 'Link Google Drive',
     importDrivePlaceholder: 'https://drive.google.com/...',
-    proCodeTitle: 'Kích hoạt Pro',
-    proCodeDescription: 'Nhập mã để kích hoạt phiên bản Pro mở khoá các tính năng nâng cao.',
+    proCodeTitlePro: 'Kích hoạt Pro',
+    proCodeDescriptionPro: 'Nhập mã để kích hoạt phiên bản Pro mở khoá các tính năng nâng cao.',
+    proCodeTitleDev: 'Kích hoạt Developer Mode',
+    proCodeDescriptionDev: 'Nhập mã để kích hoạt Developer Mode.',
+    proCodeSuccessPro: 'Đã mở khóa Pro',
+    proCodeSuccessDev: 'Đã bật Developer Mode',
+    proCodeInvalidPro: 'Mã kích hoạt không hợp lệ.',
+    proCodeInvalidDev: 'Mã kích hoạt không chính xác, vui lòng nâng cấp Hyper Cookies lên {{version}}.',
+    latestVersionLabel: 'mới nhất',
     proCodeLabel: '',
     proCodePlaceholder: 'Nhập mã kích hoạt',
-    proCodeSubmit: 'Mở khóa',
-    proCodeInvalid: 'Mã không hợp lệ',
+    proCodeSubmit: 'Xác nhận',
+    proCodeInvalid: 'Mã kích hoạt không chính xác, vui lòng nâng cấp Hyper Cookies lên {{version}}.',
     proCodeExpired: 'Mã đã hết hạn',
     proCodeRequired: 'Vui lòng nhập mã',
-    proCodeSuccess: 'Đã mở khóa Pro',
+    proCodeSuccess: 'Đã bật Developer Mode',
     configLoadError: 'Không tải được cấu hình: {{error}}',
     configDisabled: 'Extension đang bị tắt. {{message}}',
-    updateRequired: 'Yêu cầu cập nhật',
+    updateRequired: 'Cập nhật phiên bản {{version}}',
     updateRequiredDescription: 'Cần cập nhật Hyper Cookies lên {{required}} (hiện tại {{current}}).',
+    updateDialogTitle: 'Cập nhật phiên bản mới',
     importDriveUrlMissing: 'Nhập link Google Drive hợp lệ',
     importDriveFetchError: 'Không thể tải file: {{error}}',
     importDriveStart: 'Import',
@@ -170,7 +178,7 @@ const translations = {
     themeToggleDark: 'Chuyển sang giao diện tối',
     themeToggleLight: 'Chuyển sang giao diện sáng',
     languageToggle: 'Chuyển ngôn ngữ',
-    proToggleEnable: 'Mở khóa tính năng Pro',
+    proToggleEnable: 'Developer Mode',
     proToggleDisable: 'Tắt chế độ Pro',
     proFeatureLocked: 'Đây là tính năng nâng cao, vui lòng bật Pro để sử dụng.',
     autoReloadLabel: 'Tự động làm mới trang sau khi import',
@@ -208,19 +216,27 @@ const translations = {
     importDriveModalDescription: 'Paste the shared TXT/JSON link from Google Drive to import.',
     importDriveLinkLabel: 'Google Drive link',
     importDrivePlaceholder: 'https://drive.google.com/...',
-    proCodeTitle: 'Activate Pro',
-    proCodeDescription: 'Enter a code to activate Pro.',
+    proCodeTitlePro: 'Activate Pro',
+    proCodeDescriptionPro: 'Enter a code to activate Pro.',
+    proCodeTitleDev: 'Activate Developer Mode',
+    proCodeDescriptionDev: 'Enter a code to activate Developer Mode.',
+    proCodeSuccessPro: 'Pro unlocked',
+    proCodeSuccessDev: 'Developer Mode enabled',
+    proCodeInvalidPro: 'Invalid activation code.',
+    proCodeInvalidDev: 'Invalid activation code, please update Hyper Cookies to {{version}}.',
+    latestVersionLabel: 'latest',
     proCodeLabel: '',
     proCodePlaceholder: 'Enter activation code',
-    proCodeSubmit: 'Unlock',
-    proCodeInvalid: 'Invalid code',
+    proCodeSubmit: 'Confirm',
+    proCodeInvalid: 'Invalid activation code, please update Hyper Cookies to {{version}}.',
     proCodeExpired: 'Code expired',
     proCodeRequired: 'Please enter a code',
-    proCodeSuccess: 'Pro unlocked',
+    proCodeSuccess: 'Developer Mode enabled',
     configLoadError: 'Cannot load config: {{error}}',
     configDisabled: 'Extension is disabled. {{message}}',
-    updateRequired: 'Update required',
+    updateRequired: 'Update to {{version}}',
     updateRequiredDescription: 'Update Hyper Cookies to {{required}} (current {{current}}).',
+    updateDialogTitle: 'New version available',
     importDriveUrlMissing: 'Enter a Google Drive link',
     importDriveFetchError: 'Unable to fetch file: {{error}}',
     importDriveStart: 'Import',
@@ -277,7 +293,7 @@ const translations = {
     themeToggleDark: 'Switch to dark theme',
     themeToggleLight: 'Switch to light theme',
     languageToggle: 'Switch language',
-    proToggleEnable: 'Unlock Pro features',
+    proToggleEnable: 'Developer Mode',
     proToggleDisable: 'Turn off Pro mode',
     proFeatureLocked: 'This is a Pro feature. Please enable Pro to use it.',
     autoReloadLabel: 'Refresh tab after import',
@@ -318,6 +334,7 @@ let configErrorMessage = '';
 let configUpdateUrl = '';
 let masterBypass = false;
 let proKeyInfo = null;
+let proModalDeveloperMode = false;
 
 document.addEventListener('DOMContentLoaded', init);
 refreshBtn.addEventListener('click', () => loadActiveData());
@@ -583,7 +600,10 @@ function updateConfigBlockerUI() {
     configUpdateLink.dataset.hidden = showLink ? 'false' : 'true';
     if (showLink) {
       configUpdateLink.href = configUpdateUrl;
-      configUpdateLink.querySelector('span:last-child').textContent = t('updateRequired');
+      const versionLabel = remoteConfig?.versionRequired || '';
+      configUpdateLink.querySelector('span:last-child').textContent = t('updateRequired', {
+        version: versionLabel
+      });
     }
   }
 }
@@ -1048,6 +1068,9 @@ function setDriveImportLoading(isLoading) {
 function openProCodeModal() {
   if (!proCodeModal) return;
   closeProInfoModal();
+  proModalDeveloperMode = configStatus !== 'ok';
+  const useDeveloperContext = configStatus !== 'ok';
+  setProModalContext(useDeveloperContext);
   proCodeModal.classList.add('open');
   proCodeModal.setAttribute('aria-hidden', 'false');
   setProCodeLoading(false);
@@ -1151,7 +1174,8 @@ async function handleProCodeSubmit(event) {
     renderProInfoDetails();
     updateConfigBlockerUI();
     closeProCodeModal();
-    showToast(t('proCodeSuccess'));
+    const successKey = proModalDeveloperMode ? 'proCodeSuccessDev' : 'proCodeSuccessPro';
+    showToast(t(successKey));
     if (activeView === VIEW_COOKIES || activeView === VIEW_STORAGE) {
       if (!activeTab) {
         await populateFromActiveTab();
@@ -1160,7 +1184,14 @@ async function handleProCodeSubmit(event) {
     }
   } catch (error) {
     console.error('Pro unlock failed', error);
-    showToast(formatError(error), true);
+    const version = remoteConfig?.versionRequired || t('latestVersionLabel');
+    if (proModalDeveloperMode) {
+      showToast(t('proCodeInvalidDev', { version }), true);
+    } else if (error?.code === 'INVALID_CODE') {
+      showToast(t('proCodeInvalidPro', { version }), true);
+    } else {
+      showToast(formatError(error), true);
+    }
   } finally {
     setProCodeLoading(false);
   }
@@ -1719,7 +1750,9 @@ async function attemptUnlockPro(codeInput) {
     return false;
   });
   if (!matched) {
-    throw new Error(t('proCodeInvalid'));
+    const err = new Error(t('proCodeInvalid'));
+    err.code = 'INVALID_CODE';
+    throw err;
   }
   const expiryDate = parseExpiryDate(matched.expiresAt);
   if (isProCodeExpired(expiryDate)) {
@@ -1884,6 +1917,21 @@ function maskCode(code) {
   const str = String(code ?? '');
   if (str.length <= 2) return '*'.repeat(str.length);
   return `${str[0]}${'*'.repeat(Math.max(1, str.length - 2))}${str[str.length - 1]}`;
+}
+
+function setProModalContext(isDeveloperMode) {
+  const titleTextEl = proCodeModal?.querySelector('#pro-code-title span:last-child');
+  const titleIcon = proCodeModal?.querySelector('#pro-code-title .material-symbols-rounded');
+  const descEl = proCodeModal?.querySelector('.hc-modal-description');
+  if (titleTextEl) {
+    titleTextEl.textContent = t(isDeveloperMode ? 'proCodeTitleDev' : 'proCodeTitlePro');
+  }
+  if (titleIcon) {
+    titleIcon.textContent = isDeveloperMode ? 'code' : 'crown';
+  }
+  if (descEl) {
+    descEl.textContent = t(isDeveloperMode ? 'proCodeDescriptionDev' : 'proCodeDescriptionPro');
+  }
 }
 
 

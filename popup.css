@@ -62,15 +62,19 @@ body {
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.35);
 }
 
-.hc-blocker-icon {
-  width: 48px;
-  height: 48px;
-  margin: 0 auto 8px;
-  border-radius: 12px;
-  background: var(--hc-pro);
-  display: grid;
-  place-items: center;
-  color: var(--hc-pro-text);
+.hc-blocker-title {
+  margin: 0 0 8px;
+  text-align: center;
+  font-size: 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--hc-text);
+}
+
+.hc-blocker-title-icon {
+  color: var(--hc-pro);
+  font-size: 20px;
 }
 
 .hc-blocker-card p {
@@ -79,9 +83,9 @@ body {
 }
 
 .hc-blocker-card .hc-blocker-highlight {
-  font-weight: 700;
-  color: var(--hc-text);
-  font-size: 14px;
+  font-weight: 500;
+  color: var(--hc-muted);
+  font-size: 13px;
 }
 
 .hc-blocker-actions {

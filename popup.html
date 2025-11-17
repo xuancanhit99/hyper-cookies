@@ -42,24 +42,25 @@
       <div class="hc-loader-text">Đang tải cấu hình...</div>
     </div>
 
-    <div id="config-blocker" class="hc-config-blocker" data-hidden="true">
-      <div class="hc-blocker-card">
-        <div class="hc-blocker-icon">
-          <span class="material-symbols-rounded" aria-hidden="true">error</span>
+      <div id="config-blocker" class="hc-config-blocker" data-hidden="true">
+        <div class="hc-blocker-card">
+          <h3 class="hc-blocker-title">
+            <span class="material-symbols-rounded hc-blocker-title-icon" aria-hidden="true">warning</span>
+            <span data-i18n="updateDialogTitle">Cập nhật phiên bản mới</span>
+          </h3>
+          <p id="config-blocker-message" class="hc-blocker-highlight">Không thể tải cấu hình.</p>
+          <div class="hc-blocker-actions">
+            <a id="config-update-link" class="hc-btn hc-btn-primary" href="#" target="_blank" rel="noopener" data-hidden="true">
+              <span class="material-symbols-rounded" aria-hidden="true">upgrade</span>
+              <span data-i18n="updateRequired">Yêu cầu cập nhật</span>
+            </a>
+            <button type="button" id="config-master-btn" class="hc-btn hc-btn-ghost">
+              <span class="material-symbols-rounded" aria-hidden="true">code</span>
+              <span data-i18n="proToggleEnable">Developer Mode</span>
+            </button>
+          </div>
         </div>
-        <p id="config-blocker-message" class="hc-blocker-highlight">Không thể tải cấu hình.</p>
-        <div class="hc-blocker-actions">
-          <a id="config-update-link" class="hc-btn hc-btn-primary" href="#" target="_blank" rel="noopener" data-hidden="true">
-          <span class="material-symbols-rounded" aria-hidden="true">open_in_new</span>
-          <span data-i18n="updateRequired">Yêu cầu cập nhật</span>
-        </a>
-        <button type="button" id="config-master-btn" class="hc-btn hc-btn-amber">
-          <span class="material-symbols-rounded" aria-hidden="true">password</span>
-          <span data-i18n="proToggleEnable">Mở khóa Pro</span>
-        </button>
       </div>
-    </div>
-  </div>
 
     <div class="hc-toggle">
       <button id="home-tab" class="active" data-i18n="tabHome">Trang chủ</button>
@@ -216,7 +217,7 @@
     <div class="hc-modal-content" role="dialog" aria-modal="true" aria-labelledby="pro-code-title">
       <div class="hc-modal-header">
         <h2 id="pro-code-title">
-          <span class="material-symbols-rounded" aria-hidden="true">crown</span>
+          <span class="material-symbols-rounded" aria-hidden="true">code</span>
           <span data-i18n="proCodeTitle">Kích hoạt Pro</span>
         </h2>
         <button type="button" class="hc-icon-btn hc-modal-close" id="pro-code-close" aria-label="Close" data-i18n-aria-label="closeModal" data-i18n-title="closeModal">
@@ -233,8 +234,7 @@
         <div class="hc-modal-actions">
           <button type="button" class="hc-btn hc-btn-ghost" id="pro-code-cancel" data-i18n="cancel">Huỷ</button>
           <button type="submit" class="hc-btn hc-btn-primary" id="pro-code-submit">
-            <span class="hc-btn-icon material-symbols-rounded" aria-hidden="true">lock_open_right</span>
-            <span data-i18n="proCodeSubmit">Mở khóa</span>
+            <span data-i18n="proCodeSubmit">Xác nhận</span>
           </button>
         </div>
       </form>
