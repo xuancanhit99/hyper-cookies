@@ -1,39 +1,78 @@
-name: Build & Release Extension
+name: Release extension
 
 on:
   push:
     tags:
-      - 'v*'
-  workflow_dispatch:
+      - 'v*.*.*'
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   release:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
+      attestations: write
+
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
-      - name: Read version from manifest
-        id: version
-        run: |
-          VERSION=$(node -p "require('./manifest.json').version")
-          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
-          echo "ZIP_NAME=hyper-cookies-$VERSION.zip" >> "$GITHUB_ENV"
-
-      - name: Zip extension
-        run: |
-          zip -r "$ZIP_NAME" . \
-            -x ".git/*" ".github/*" ".idea/*" "node_modules/*" "*.DS_Store"
-
-      - name: Publish Release
-        uses: softprops/action-gh-release@v1
+      - name: Set up Node.js
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
-          files: ${{ env.ZIP_NAME }}
-          name: Release ${{ steps.version.outputs.version }}
-          tag_name: ${{ github.ref_name }}
-          draft: false
-          prerelease: false
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate tag and manifest version
+        shell: bash
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          MANIFEST_VERSION="$(node -p "require('./manifest.json').version")"
+          PACKAGE_VERSION="$(node -p "require('./package.json').version")"
+          test "$TAG_VERSION" = "$MANIFEST_VERSION"
+          test "$MANIFEST_VERSION" = "$PACKAGE_VERSION"
+          echo "RELEASE_VERSION=$TAG_VERSION" >> "$GITHUB_ENV"
+
+      - name: Run quality gates
+        run: npm run check
+
+      - name: Run browser smoke test
+        run: npm run test:e2e
+
+      - name: Build production package
+        run: NODE_ENV=production npm run build
+
+      - name: Package deterministic file set
+        shell: bash
+        run: |
+          ZIP_NAME="hyper-cookies-${RELEASE_VERSION}.zip"
+          SOURCE_DATE_EPOCH="$(git show -s --format=%ct HEAD)"
+          find dist -type f -exec touch -d "@${SOURCE_DATE_EPOCH}" {} +
+          cd dist
+          find . -type f -print0 | LC_ALL=C sort -z | xargs -0 zip -X "../${ZIP_NAME}"
+          cd ..
+          sha256sum "$ZIP_NAME" > "${ZIP_NAME}.sha256"
+          echo "ZIP_NAME=$ZIP_NAME" >> "$GITHUB_ENV"
+
+      - name: Attest release artifact
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6 # v4
+        with:
+          subject-path: ${{ env.ZIP_NAME }}
+
+      - name: Publish GitHub Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create "$GITHUB_REF_NAME" \
+            "$ZIP_NAME" \
+            "$ZIP_NAME.sha256" \
+            --verify-tag \
+            --title "Hyper Cookies ${RELEASE_VERSION}" \
+            --generate-notes

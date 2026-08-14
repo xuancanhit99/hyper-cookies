@@ -1,14 +1,54 @@
-# Hyper Cookies – Hướng dẫn cài đặt thủ công (Chrome)
+# Hyper Cookies
 
-## Cài đặt
-1. Tải gói phát hành `.zip` mới nhất từ trang Releases:  
-   `https://github.com/xuancanhit99/hyper-cookies/releases/`
-2. Giải nén file `.zip` vừa tải về thành một thư mục.
-3. Mở Chrome và truy cập `chrome://extensions/`.
-4. Bật **Developer mode** (góc trên bên phải).
-5. Nhấn **Load unpacked** và chọn thư mục vừa giải nén.
+Hyper Cookies là Chrome Extension Manifest V3 để xem, chỉnh sửa, xóa, import và export cookies cùng `localStorage` của tab hiện tại.
 
-## Sử dụng
-Sau khi cài, biểu tượng Hyper Cookies sẽ xuất hiện trên thanh công cụ. Mở extension để:
-- Quản lý cookies và localStorage của trang hiện tại.
-- Nhập/ xuất dữ liệu, bật tính năng Pro/Developer Mode theo hướng dẫn trong giao diện.
+Từ phiên bản 1.1.0, mọi tính năng được mở cho tất cả người dùng. Extension không còn Pro key, Developer Mode, remote config hay remote kill-switch.
+
+## Yêu cầu
+
+- Node.js 22 trở lên.
+- Google Chrome hoặc trình duyệt Chromium hỗ trợ Manifest V3.
+
+## Phát triển
+
+```bash
+npm ci
+npm run check
+npm run test:e2e
+```
+
+`npm run build` tạo extension có thể cài tại thư mục `dist/`.
+
+## Cài đặt thủ công
+
+1. Chạy `npm ci && npm run build` hoặc tải ZIP từ GitHub Releases.
+2. Mở `chrome://extensions/`.
+3. Bật **Developer mode**.
+4. Chọn **Load unpacked** và trỏ tới thư mục `dist/`.
+5. Mở một trang HTTP/HTTPS và bấm biểu tượng Hyper Cookies.
+
+## Quyền truy cập
+
+- `activeTab`: quyền tạm thời với tab mà người dùng chủ động mở extension.
+- `cookies`: đọc và thay đổi cookie của tab được cấp quyền.
+- `scripting`: đọc và thay đổi `localStorage` của tab hiện tại.
+- `storage`: lưu ngôn ngữ, theme và các tùy chọn cục bộ.
+- `https://drive.google.com/*` và `https://drive.usercontent.google.com/*`: tải file import do người dùng cung cấp.
+
+Extension không yêu cầu `<all_urls>`.
+
+## Scripts
+
+- `npm run build`: bundle TypeScript và tạo package trong `dist/`.
+- `npm run typecheck`: kiểm tra TypeScript.
+- `npm run lint`: chạy ESLint.
+- `npm run format:check`: kiểm tra định dạng.
+- `npm test`: chạy unit test.
+- `npm run test:e2e`: build và smoke-test extension trong Chrome.
+- `npm run check`: chạy toàn bộ quality gate ngoại trừ browser smoke test.
+
+## Phát hành
+
+Manifest và `package.json` phải có cùng version. Tạo tag đúng định dạng, ví dụ `v1.1.0`; GitHub Actions sẽ kiểm tra quality gate, build file ZIP, tạo SHA-256, attestation và GitHub Release.
+
+Xem thêm [PRIVACY.md](PRIVACY.md), [SECURITY.md](SECURITY.md) và [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).

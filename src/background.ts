@@ -1,111 +1,114 @@
+import { MessageType } from './shared/messages';
+
 // Service worker cho Hyper Cookies
 
-const COOKIE_CACHE_KEY = 'hyper-cookies:last-domain';
+const LEGACY_STORAGE_KEYS = [
+  'hyper-cookies:last-domain',
+  'hyper-cookies:pro-enabled',
+  'hyper-cookies:pro-info'
+];
+
+chrome.runtime.onInstalled.addListener(() => {
+  chrome.storage.local.remove(LEGACY_STORAGE_KEYS);
+});
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'GET_COOKIES') {
+  if (message.type === MessageType.GetCookies) {
     handleGetCookies(message.payload)
-      .then(cookies => sendResponse({ cookies }))
-      .catch(error => {
+      .then((cookies) => sendResponse({ cookies }))
+      .catch((error) => {
         console.error('Hyper Cookies: error while fetching cookies', error);
         sendResponse({ error: error.message });
       });
     return true; // keep channel for async response
   }
 
-  if (message.type === 'DELETE_COOKIE') {
+  if (message.type === MessageType.DeleteCookie) {
     chrome.cookies.remove(
       {
         url: message.payload.url,
         name: message.payload.name,
         storeId: message.payload.storeId
       },
-      details => sendResponse({ details, error: chrome.runtime.lastError?.message })
+      (details) => sendResponse({ details, error: chrome.runtime.lastError?.message })
     );
     return true;
   }
 
-  if (message.type === 'REMEMBER_DOMAIN') {
-    chrome.storage.local.set({ [COOKIE_CACHE_KEY]: message.payload.domain }, () => {
-      sendResponse({ ok: !chrome.runtime.lastError, error: chrome.runtime.lastError?.message });
-    });
-    return true;
-  }
-
-  if (message.type === 'GET_LOCAL_STORAGE') {
+  if (message.type === MessageType.GetLocalStorage) {
     handleGetLocalStorage(message.payload?.tabId)
-      .then(entries => sendResponse({ entries }))
-      .catch(error => {
+      .then((entries) => sendResponse({ entries }))
+      .catch((error) => {
         console.error('Hyper Cookies: error while reading local storage', error);
         sendResponse({ error: error.message });
       });
     return true;
   }
 
-  if (message.type === 'DELETE_LOCAL_STORAGE_ITEM') {
+  if (message.type === MessageType.DeleteLocalStorageItem) {
     removeLocalStorageItem(message.payload?.tabId, message.payload?.key)
-      .then(result => sendResponse(result))
-      .catch(error => {
+      .then((result) => sendResponse(result))
+      .catch((error) => {
         console.error('Hyper Cookies: error removing local storage item', error);
         sendResponse({ error: error.message });
       });
     return true;
   }
 
-  if (message.type === 'SET_COOKIES') {
+  if (message.type === MessageType.SetCookies) {
     importCookies(message.payload?.cookies || [], message.payload?.targetUrl)
-      .then(result => sendResponse(result))
-      .catch(error => {
+      .then((result) => sendResponse(result))
+      .catch((error) => {
         console.error('Hyper Cookies: error importing cookies', error);
         sendResponse({ error: error.message });
       });
     return true;
   }
 
-  if (message.type === 'SET_LOCAL_STORAGE') {
+  if (message.type === MessageType.SetLocalStorage) {
     importLocalStorage(message.payload?.tabId, message.payload?.entries || [])
-      .then(result => sendResponse(result))
-      .catch(error => {
+      .then((result) => sendResponse(result))
+      .catch((error) => {
         console.error('Hyper Cookies: error importing local storage', error);
         sendResponse({ error: error.message });
       });
     return true;
   }
 
-  if (message.type === 'UPDATE_COOKIE_FIELDS') {
+  if (message.type === MessageType.UpdateCookieFields) {
     updateCookieFields(message.payload)
-      .then(result => sendResponse(result))
-      .catch(error => {
+      .then((result) => sendResponse(result))
+      .catch((error) => {
         console.error('Hyper Cookies: error updating cookie fields', error);
         sendResponse({ error: error.message });
       });
     return true;
   }
 
-  if (message.type === 'UPDATE_LOCAL_STORAGE_VALUE') {
+  if (message.type === MessageType.UpdateLocalStorageValue) {
     updateLocalStorageValue(message.payload)
-      .then(result => sendResponse(result))
-      .catch(error => {
+      .then((result) => sendResponse(result))
+      .catch((error) => {
         console.error('Hyper Cookies: error updating local storage value', error);
         sendResponse({ error: error.message });
       });
     return true;
   }
 
-  if (message.type === 'RENAME_LOCAL_STORAGE_KEY') {
+  if (message.type === MessageType.RenameLocalStorageKey) {
     renameLocalStorageKey(message.payload)
-      .then(result => sendResponse(result))
-      .catch(error => {
+      .then((result) => sendResponse(result))
+      .catch((error) => {
         console.error('Hyper Cookies: error renaming local storage key', error);
         sendResponse({ error: error.message });
       });
     return true;
   }
 
-  if (message.type === 'CLEAR_ALL_DATA') {
+  if (message.type === MessageType.ClearAllData) {
     clearAllData(message.payload)
-      .then(result => sendResponse(result))
-      .catch(error => {
+      .then((result) => sendResponse(result))
+      .catch((error) => {
         console.error('Hyper Cookies: error clearing data', error);
         sendResponse({ error: error.message });
       });
@@ -119,13 +122,6 @@ async function handleGetCookies({ url }) {
   }
 
   const cookies = await chrome.cookies.getAll({ url });
-  // Lưu domain vừa truy vấn để popup nhớ trạng thái
-  try {
-    const domain = new URL(url).hostname;
-    await chrome.storage.local.set({ [COOKIE_CACHE_KEY]: domain });
-  } catch (error) {
-    console.warn('Hyper Cookies: cannot cache domain', error);
-  }
   return cookies;
 }
 
@@ -136,7 +132,7 @@ async function handleGetLocalStorage(tabId) {
     func: () => {
       try {
         return {
-          entries: Object.keys(localStorage).map(key => ({
+          entries: Object.keys(localStorage).map((key) => ({
             key,
             value: localStorage.getItem(key)
           }))
@@ -156,7 +152,7 @@ async function removeLocalStorageItem(tabId, key) {
   if (!tabId || !key) throw new Error('Thiếu tabId hoặc key');
   const [injectionResult] = await chrome.scripting.executeScript({
     target: { tabId },
-    func: keyName => {
+    func: (keyName) => {
       try {
         localStorage.removeItem(keyName);
         return { ok: true };
@@ -210,9 +206,9 @@ async function importLocalStorage(tabId, entries) {
   }
   const [result] = await chrome.scripting.executeScript({
     target: { tabId },
-    func: items => {
+    func: (items) => {
       try {
-        items.forEach(item => {
+        items.forEach((item) => {
           if (item?.key != null) {
             localStorage.setItem(String(item.key), item.value ?? '');
           }
@@ -342,8 +338,8 @@ async function renameLocalStorageKey({ tabId, oldKey, newKey }) {
 }
 
 async function clearAllData({ url, tabId }) {
-  if (!url) throw new Error('URL khng h?p l?');
-  if (!tabId) throw new Error('Tab ID khng h?p l?');
+  if (!url) throw new Error('URL không hợp lệ');
+  if (!tabId) throw new Error('Tab ID không hợp lệ');
 
   const cookies = await chrome.cookies.getAll({ url });
   let removedCookies = 0;
@@ -374,9 +370,8 @@ async function clearAllData({ url, tabId }) {
     }
   });
 
-  if (!result) throw new Error('Khng th? xa local storage');
+  if (!result) throw new Error('Không thể xóa local storage');
   if (result.result?.error) throw new Error(result.result.error);
 
   return { ok: true, removedCookies, clearedStorage: true };
 }
-

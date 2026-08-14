@@ -1,269 +1,253 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="vi">
-<head>
-  <meta charset="UTF-8">
-  <title>Hyper Cookies</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded" rel="stylesheet">
-  <link rel="stylesheet" href="popup.css">
-</head>
-<body class="hc-view-home hc-theme-light">
-  <div class="hc-content">
-    <header class="hc-header">
-      <div class="hc-title">
-        <img src="images/10.svg" alt="Hyper Cookies logo" class="hc-logo">
-        <div>
-          <h1>Hyper Cookies</h1>
-          <small id="active-domain">Đang tải...</small>
-        </div>
-      </div>
-      <div class="hc-header-actions">
-        <button type="button" id="language-toggle" class="hc-icon-btn hc-flag-btn" data-i18n-title="languageToggle">
-          <img src="images/vn.svg" alt="Vietnamese flag" class="hc-flag-icon" aria-hidden="true">
-        </button>
-        <button type="button" id="pro-toggle" class="hc-icon-btn hc-pro-btn" aria-pressed="false" data-i18n-title="proToggleEnable">
-          <span class="hc-pro-label" aria-hidden="true">LITE</span>
-        </button>
-        <button type="button" id="theme-toggle" class="hc-icon-btn">
-          <span class="material-symbols-rounded" aria-hidden="true">dark_mode</span>
-        </button>
-        <button id="refresh-btn" class="hc-icon-btn" title="Tải lại cookies" data-i18n-title="refreshTooltip">
-          <span class="material-symbols-rounded" aria-hidden="true">cached</span>
-        </button>
-      </div>
-    </header>
-    <div id="pro-key-note" class="hc-pro-key-note" data-hidden="true"></div>
-
-    <div id="config-loading" class="hc-config-loading" data-hidden="true" role="status" aria-live="polite">
-      <div class="hc-loader">
-        <span class="material-symbols-rounded" aria-hidden="true">sync</span>
-      </div>
-      <div class="hc-loader-text">Đang tải cấu hình...</div>
-    </div>
-
-      <div id="config-blocker" class="hc-config-blocker" data-hidden="true">
-        <div class="hc-blocker-card">
-          <h3 class="hc-blocker-title">
-            <span class="material-symbols-rounded hc-blocker-title-icon" aria-hidden="true">warning</span>
-            <span data-i18n="updateDialogTitle">Cập nhật phiên bản mới</span>
-          </h3>
-          <p id="config-blocker-message" class="hc-blocker-highlight">Không thể tải cấu hình.</p>
-          <div class="hc-blocker-actions">
-            <a id="config-update-link" class="hc-btn hc-btn-primary" href="#" target="_blank" rel="noopener" data-hidden="true">
-              <span class="material-symbols-rounded" aria-hidden="true">upgrade</span>
-              <span data-i18n="updateRequired">Yêu cầu cập nhật</span>
-            </a>
-            <button type="button" id="config-master-btn" class="hc-btn hc-btn-ghost">
-              <span class="material-symbols-rounded" aria-hidden="true">code</span>
-              <span data-i18n="proToggleEnable">Developer Mode</span>
-            </button>
+  <head>
+    <meta charset="UTF-8" />
+    <title>Hyper Cookies</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body class="hc-view-home hc-theme-light">
+    <div class="hc-content">
+      <header class="hc-header">
+        <div class="hc-title">
+          <img src="images/10.svg" alt="Hyper Cookies logo" class="hc-logo" />
+          <div>
+            <h1>Hyper Cookies</h1>
+            <small id="active-domain">Đang tải...</small>
           </div>
         </div>
-      </div>
-
-    <div class="hc-toggle">
-      <button id="home-tab" class="active" data-i18n="tabHome">Trang chủ</button>
-      <button id="cookies-tab" data-i18n="tabCookies">Cookies</button>
-      <button id="storage-tab" data-i18n="tabStorage">Bộ nhớ</button>
-    </div>
-
-    <section id="home-section" class="hc-home-section active">
-      <label class="hc-url-label">
-        <div class="hc-readonly-input">
-          <input type="text" id="target-url" placeholder="https://example.com" readonly>
-        </div>
-        <div class="hc-url-divider" aria-hidden="true"></div>
-        <button type="button" id="clear-all-btn" class="hc-url-chip" title="Xóa tất cả" data-i18n-title="clearAllTitle">
-          <span class="material-symbols-rounded" aria-hidden="true">clear_all</span>
-        </button>
-        <button type="button" id="copy-url-btn" class="hc-url-chip" title="Copy URL hiện tại" data-i18n-title="copyUrlTitle">
-          <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
-        </button>
-
-      </label>
-      <div class="hc-actions-row">
-        <div class="hc-btn-pair">
-          <button id="export-json" class="hc-btn hc-btn-amber hc-btn-sm">
-            <span class="hc-btn-icon material-symbols-rounded" aria-hidden="true">file_export</span>
-            <span id="export-json-label" data-i18n="exportJson">Export JSON</span>
+        <div class="hc-header-actions">
+          <button
+            type="button"
+            id="language-toggle"
+            class="hc-icon-btn hc-flag-btn"
+            data-i18n-title="languageToggle"
+          >
+            <img
+              src="images/vn.svg"
+              alt="Vietnamese flag"
+              class="hc-flag-icon"
+              aria-hidden="true"
+            />
           </button>
-          <button id="import-json" class="hc-btn hc-btn-emerald hc-btn-sm">
-            <span class="hc-btn-icon material-symbols-rounded" aria-hidden="true">file_open</span>
-            <span id="import-json-label" data-i18n="importJson">Import JSON</span>
+          <button type="button" id="theme-toggle" class="hc-icon-btn">
+            <span class="material-symbols-rounded" aria-hidden="true">dark_mode</span>
+          </button>
+          <button
+            id="refresh-btn"
+            class="hc-icon-btn"
+            title="Tải lại cookies"
+            data-i18n-title="refreshTooltip"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true">cached</span>
           </button>
         </div>
-        <button type="button" id="import-drive" class="hc-btn hc-btn-primary hc-btn-sm hc-import-drive-btn">
-          <img src="images/drive.svg" alt="" class="hc-btn-icon hc-btn-icon-img" aria-hidden="true">
-          <span id="import-drive-label" data-i18n="importDrive">Import từ Google Drive</span>
-        </button>
-        <input type="file" id="import-file" accept=".json,application/json" hidden>
+      </header>
+      <div class="hc-toggle">
+        <button id="home-tab" class="active" data-i18n="tabHome">Trang chủ</button>
+        <button id="cookies-tab" data-i18n="tabCookies">Cookies</button>
+        <button id="storage-tab" data-i18n="tabStorage">Bộ nhớ</button>
       </div>
-      <div class="hc-option-row">
-        <label class="hc-checkbox">
-          <input type="checkbox" id="auto-reload-checkbox">
-          <span data-i18n="autoReloadLabel">Tự làm mới trang sau khi import</span>
-        </label>
-      </div>
-      <div class="hc-option-row">
-        <label class="hc-checkbox">
-          <input type="checkbox" id="base64-export-checkbox">
-          <span data-i18n="base64ExportLabel">Mã hóa khi export</span>
-        </label>
-      </div>
-    </section>
 
-    <section class="hc-table-container hc-data-section" id="cookies-section">
-      <table>
-        <thead>
-        <tr>
-          <th data-i18n="cookiesColumnName">Tên</th>
-          <th data-i18n="cookiesColumnDomain">Domain</th>
-          <th data-i18n="cookiesColumnExpiry">Hết hạn</th>
-          <th data-i18n="cookiesColumnValue">Giá trị</th>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody id="cookie-table-body">
-        <tr>
-          <td colspan="5" class="hc-empty">Chưa có dữ liệu</td>
-        </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section class="hc-table-container hc-data-section" id="storage-section">
-      <table>
-        <thead>
-        <tr>
-          <th data-i18n="storageColumnKey">Key</th>
-          <th data-i18n="storageColumnValue">Value</th>
-          <th></th>
-        </tr>
-        </thead>
-        <tbody id="storage-table-body">
-        <tr>
-          <td colspan="3" class="hc-empty">Chưa có dữ liệu</td>
-        </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <template id="cookie-row-template">
-      <tr class="hc-row">
-        <td class="hc-cookie-name" data-label="Tên"></td>
-        <td class="hc-cookie-domain" data-label="Domain"></td>
-        <td class="hc-cookie-expiry" data-label="Hết hạn"></td>
-        <td class="hc-cookie-value" data-label="Giá trị"></td>
-        <td class="hc-actions">
-          <button class="hc-delete" title="Xóa cookie">
-            <span class="material-symbols-rounded">backspace</span>
+      <section id="home-section" class="hc-home-section active">
+        <label class="hc-url-label">
+          <div class="hc-readonly-input">
+            <input type="text" id="target-url" placeholder="https://example.com" readonly />
+          </div>
+          <div class="hc-url-divider" aria-hidden="true"></div>
+          <button
+            type="button"
+            id="clear-all-btn"
+            class="hc-url-chip"
+            title="Xóa tất cả"
+            data-i18n-title="clearAllTitle"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true">clear_all</span>
           </button>
-        </td>
-      </tr>
-    </template>
+          <button
+            type="button"
+            id="copy-url-btn"
+            class="hc-url-chip"
+            title="Copy URL hiện tại"
+            data-i18n-title="copyUrlTitle"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true">content_copy</span>
+          </button>
+        </label>
+        <div class="hc-actions-row">
+          <div class="hc-btn-pair">
+            <button id="export-json" class="hc-btn hc-btn-amber hc-btn-sm">
+              <span class="hc-btn-icon material-symbols-rounded" aria-hidden="true"
+                >file_export</span
+              >
+              <span id="export-json-label" data-i18n="exportJson">Export JSON</span>
+            </button>
+            <button id="import-json" class="hc-btn hc-btn-emerald hc-btn-sm">
+              <span class="hc-btn-icon material-symbols-rounded" aria-hidden="true">file_open</span>
+              <span id="import-json-label" data-i18n="importJson">Import JSON</span>
+            </button>
+          </div>
+          <button
+            type="button"
+            id="import-drive"
+            class="hc-btn hc-btn-primary hc-btn-sm hc-import-drive-btn"
+          >
+            <img
+              src="images/drive.svg"
+              alt=""
+              class="hc-btn-icon hc-btn-icon-img"
+              aria-hidden="true"
+            />
+            <span id="import-drive-label" data-i18n="importDrive">Import từ Google Drive</span>
+          </button>
+          <input type="file" id="import-file" accept=".json,application/json" hidden />
+        </div>
+        <div class="hc-option-row">
+          <label class="hc-checkbox">
+            <input type="checkbox" id="auto-reload-checkbox" />
+            <span data-i18n="autoReloadLabel">Tự làm mới trang sau khi import</span>
+          </label>
+        </div>
+        <div class="hc-option-row">
+          <label class="hc-checkbox">
+            <input type="checkbox" id="base64-export-checkbox" />
+            <span data-i18n="base64ExportLabel">Mã hóa khi export</span>
+          </label>
+        </div>
+      </section>
+
+      <section class="hc-table-container hc-data-section" id="cookies-section">
+        <table>
+          <thead>
+            <tr>
+              <th data-i18n="cookiesColumnName">Tên</th>
+              <th data-i18n="cookiesColumnDomain">Domain</th>
+              <th data-i18n="cookiesColumnExpiry">Hết hạn</th>
+              <th data-i18n="cookiesColumnValue">Giá trị</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="cookie-table-body">
+            <tr>
+              <td colspan="5" class="hc-empty">Chưa có dữ liệu</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section class="hc-table-container hc-data-section" id="storage-section">
+        <table>
+          <thead>
+            <tr>
+              <th data-i18n="storageColumnKey">Key</th>
+              <th data-i18n="storageColumnValue">Value</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="storage-table-body">
+            <tr>
+              <td colspan="3" class="hc-empty">Chưa có dữ liệu</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+
+      <template id="cookie-row-template">
+        <tr class="hc-row">
+          <td class="hc-cookie-name" data-label="Tên"></td>
+          <td class="hc-cookie-domain" data-label="Domain"></td>
+          <td class="hc-cookie-expiry" data-label="Hết hạn"></td>
+          <td class="hc-cookie-value" data-label="Giá trị"></td>
+          <td class="hc-actions">
+            <button class="hc-delete" title="Xóa cookie">
+              <span class="material-symbols-rounded">backspace</span>
+            </button>
+          </td>
+        </tr>
+      </template>
 
       <template id="storage-row-template">
         <tr class="hc-row">
           <td class="hc-storage-key" data-label="Key"></td>
           <td class="hc-storage-value" data-label="Value"></td>
           <td class="hc-actions">
-          <button class="hc-delete" title="Xóa item">
-            <span class="material-symbols-rounded">backspace</span>
-          </button>
-        </td>
-      </tr>
-    </template>
+            <button class="hc-delete" title="Xóa item">
+              <span class="material-symbols-rounded">backspace</span>
+            </button>
+          </td>
+        </tr>
+      </template>
 
-    <div id="toast" class="hc-toast"></div>
-  </div>
-
-  <div class="hc-footer-divider" aria-hidden="true"></div>
-  <footer class="hc-footer">
-    <small>© 2025 HYPER - Developed by <a href="https://t.me/hennryvu" target="_blank" rel="noopener noreferrer">Xuan Canh</a></small>
-  </footer>
-
-  <div id="drive-import-modal" class="hc-modal" aria-hidden="true">
-    <div class="hc-modal-content" role="dialog" aria-modal="true" aria-labelledby="drive-import-title">
-      <div class="hc-modal-header">
-        <h2 id="drive-import-title">
-          <img src="images/drive.svg" alt="" aria-hidden="true">
-          <span data-i18n="importDriveModalTitle">Import from Google Drive</span>
-        </h2>
-        <button type="button" class="hc-icon-btn hc-modal-close" id="drive-import-close" aria-label="Close" data-i18n-aria-label="closeModal" data-i18n-title="closeModal">
-          <span class="material-symbols-rounded" aria-hidden="true">close</span>
-        </button>
-      </div>
-      <p class="hc-modal-description" data-i18n="importDriveModalDescription">
-        Paste the Google Drive JSON link you want to import.
-      </p>
-      <form id="drive-import-form" class="hc-modal-form">
-        <label class="hc-modal-field" for="drive-import-url">
-          <span data-i18n="importDriveLinkLabel">Google Drive link</span>
-          <input type="url" id="drive-import-url" placeholder="https://drive.google.com/..." required data-i18n-placeholder="importDrivePlaceholder">
-        </label>
-        <div class="hc-modal-actions">
-          <button type="button" class="hc-btn hc-btn-ghost" id="drive-import-cancel" data-i18n="cancel">Cancel</button>
-          <button type="submit" class="hc-btn hc-btn-primary" id="drive-import-submit">
-            <span class="hc-btn-icon material-symbols-rounded" aria-hidden="true">cloud_download</span>
-            <span data-i18n="importDriveStart">Import</span>
-          </button>
-        </div>
-      </form>
+      <div id="toast" class="hc-toast"></div>
     </div>
-  </div>
 
-  <div id="pro-code-modal" class="hc-modal" aria-hidden="true">
-    <div class="hc-modal-content" role="dialog" aria-modal="true" aria-labelledby="pro-code-title">
-      <div class="hc-modal-header">
-        <h2 id="pro-code-title">
-          <span class="material-symbols-rounded" aria-hidden="true">code</span>
-          <span data-i18n="proCodeTitle">Kích hoạt Pro</span>
-        </h2>
-        <button type="button" class="hc-icon-btn hc-modal-close" id="pro-code-close" aria-label="Close" data-i18n-aria-label="closeModal" data-i18n-title="closeModal">
-          <span class="material-symbols-rounded" aria-hidden="true">close</span>
-        </button>
-      </div>
-      <p class="hc-modal-description" data-i18n="proCodeDescription">
-        Nhập mã Pro hoặc master password (dùng khi mất kết nối cấu hình).
-      </p>
-      <form id="pro-code-form" class="hc-modal-form">
-        <label class="hc-modal-field" for="pro-code-input">
-          <input type="text" id="pro-code-input" placeholder="Nhập mã kích hoạt" required data-i18n-placeholder="proCodePlaceholder">
-        </label>
-        <div class="hc-modal-actions">
-          <button type="button" class="hc-btn hc-btn-ghost" id="pro-code-cancel" data-i18n="cancel">Huỷ</button>
-          <button type="submit" class="hc-btn hc-btn-primary" id="pro-code-submit">
-            <span data-i18n="proCodeSubmit">Xác nhận</span>
+    <div class="hc-footer-divider" aria-hidden="true"></div>
+    <footer class="hc-footer">
+      <small
+        >© 2026 HYPER - Developed by
+        <a href="https://t.me/hennryvu" target="_blank" rel="noopener noreferrer"
+          >Xuan Canh</a
+        ></small
+      >
+    </footer>
+
+    <div id="drive-import-modal" class="hc-modal" aria-hidden="true">
+      <div
+        class="hc-modal-content"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="drive-import-title"
+      >
+        <div class="hc-modal-header">
+          <h2 id="drive-import-title">
+            <img src="images/drive.svg" alt="" aria-hidden="true" />
+            <span data-i18n="importDriveModalTitle">Import from Google Drive</span>
+          </h2>
+          <button
+            type="button"
+            class="hc-icon-btn hc-modal-close"
+            id="drive-import-close"
+            aria-label="Close"
+            data-i18n-aria-label="closeModal"
+            data-i18n-title="closeModal"
+          >
+            <span class="material-symbols-rounded" aria-hidden="true">close</span>
           </button>
         </div>
-      </form>
-    </div>
-  </div>
-
-  <div id="pro-info-modal" class="hc-modal" aria-hidden="true">
-    <div class="hc-modal-content" role="dialog" aria-modal="true" aria-labelledby="pro-info-title">
-      <div class="hc-modal-header">
-        <h2 id="pro-info-title">
-          <span class="material-symbols-rounded" aria-hidden="true">info</span>
-          <span data-i18n="proInfoTitle">Thông tin kích hoạt Pro</span>
-        </h2>
-        <button type="button" class="hc-icon-btn hc-modal-close" id="pro-info-close" aria-label="Close" data-i18n-aria-label="closeModal" data-i18n-title="closeModal">
-          <span class="material-symbols-rounded" aria-hidden="true">close</span>
-        </button>
+        <p class="hc-modal-description" data-i18n="importDriveModalDescription">
+          Paste the Google Drive JSON link you want to import.
+        </p>
+        <form id="drive-import-form" class="hc-modal-form">
+          <label class="hc-modal-field" for="drive-import-url">
+            <span data-i18n="importDriveLinkLabel">Google Drive link</span>
+            <input
+              type="url"
+              id="drive-import-url"
+              placeholder="https://drive.google.com/..."
+              required
+              data-i18n-placeholder="importDrivePlaceholder"
+            />
+          </label>
+          <div class="hc-modal-actions">
+            <button
+              type="button"
+              class="hc-btn hc-btn-ghost"
+              id="drive-import-cancel"
+              data-i18n="cancel"
+            >
+              Cancel
+            </button>
+            <button type="submit" class="hc-btn hc-btn-primary" id="drive-import-submit">
+              <span class="hc-btn-icon material-symbols-rounded" aria-hidden="true"
+                >cloud_download</span
+              >
+              <span data-i18n="importDriveStart">Import</span>
+            </button>
+          </div>
+        </form>
       </div>
-      <div class="hc-modal-description" id="pro-info-details"></div>
-      <div class="hc-modal-actions">
-        <button type="button" class="hc-btn hc-btn-ghost" id="pro-info-clear">
-          <span data-i18n="proInfoClear">Xóa key Pro</span>
-        </button>
-        <button type="button" class="hc-btn hc-btn-primary" id="pro-info-new-key">
-          <span data-i18n="proInfoNewKey">Nhập key mới</span>
-        </button>
-      </div>
     </div>
-  </div>
 
-  <script src="popup.js" type="module"></script>
-</body>
+    <script src="popup.js" type="module"></script>
+  </body>
 </html>

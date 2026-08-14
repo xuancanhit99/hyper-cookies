@@ -1,1 +1,7 @@
-.idea/misc.xml
+.idea/
+dist/
+node_modules/
+coverage/
+*.zip
+*.sha256
+.DS_Store
