@@ -9,6 +9,7 @@ const extensionPath = path.join(projectRoot, 'dist');
 const browser = await puppeteer.launch({
   headless: true,
   pipe: true,
+  args: process.platform === 'linux' ? ['--no-sandbox'] : [],
   enableExtensions: [extensionPath]
 });
 
