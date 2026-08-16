@@ -2,7 +2,7 @@
 
 ## Quyết định đã triển khai
 
-- Thay quyền `<all_urls>` bằng `activeTab`; chỉ giữ host permissions tối thiểu cho Google Drive import.
+- Thay quyền `<all_urls>` thường trực bằng `activeTab` và optional host permissions theo từng domain; chỉ giữ host permissions cố định tối thiểu cho Google Drive import.
 - Gỡ hoàn toàn Pro key, Developer Mode, remote config và remote kill-switch.
 - Mở Cookies, Local Storage và các tùy chọn nâng cao cho mọi người dùng.
 - Chuyển source sang TypeScript có build output riêng.
@@ -29,7 +29,7 @@ Các hạng mục hoãn này là rủi ro đã biết; không nên coi file impo
 - [ ] `npm ci` thành công.
 - [ ] `npm run check` thành công.
 - [ ] `npm run test:e2e` thành công trên Chrome stable.
-- [ ] Manual smoke test: mở action trên một trang HTTPS, xác nhận URL/cookies/localStorage được tải bằng `activeTab`.
+- [ ] Manual smoke test: mở action trên một trang HTTPS, cấp quyền cho domain, sau đó xác nhận cookies và localStorage được tải đúng.
 - [ ] Manual smoke test: import một file Google Drive public qua redirect download thực tế.
 - [ ] Version trong `manifest.json`, `package.json` và Git tag khớp nhau.
 - [ ] Privacy policy và permission disclosure phản ánh đúng hành vi hiện tại.

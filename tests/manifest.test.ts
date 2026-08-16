@@ -12,6 +12,7 @@ describe('production manifest', () => {
       'https://drive.google.com/*',
       'https://drive.usercontent.google.com/*'
     ]);
+    expect(manifest.optional_host_permissions).toEqual(['http://*/*', 'https://*/*']);
   });
 
   it('keeps package and extension versions aligned', () => {

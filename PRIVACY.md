@@ -1,6 +1,6 @@
 # Chính sách quyền riêng tư
 
-Cập nhật lần cuối: 11/08/2026.
+Cập nhật lần cuối: 17/08/2026.
 
 Hyper Cookies xử lý cookies, URL và `localStorage` để cung cấp chức năng quản lý, import và export dữ liệu của tab do người dùng lựa chọn.
 
@@ -20,6 +20,8 @@ Hyper Cookies xử lý cookies, URL và `localStorage` để cung cấp chức n
 - Extension không có telemetry, analytics hay quảng cáo.
 
 ## Kiểm soát của người dùng
+
+Quyền truy cập cookie cho website HTTP/HTTPS là quyền tùy chọn. Hyper Cookies chỉ yêu cầu quyền cho domain hiện tại sau khi người dùng chủ động bấm **Cho phép truy cập** trong tab Cookies. Người dùng có thể thu hồi quyền này trong phần cài đặt extension của Chrome.
 
 Người dùng có thể gỡ extension bất kỳ lúc nào để xóa các tùy chọn cục bộ do extension lưu. File đã export nằm ngoài phạm vi lưu trữ của extension và phải được người dùng tự quản lý hoặc xóa.
 

@@ -117,7 +117,22 @@
       </section>
 
       <section class="hc-table-container hc-data-section" id="cookies-section">
-        <table>
+        <div id="cookie-permission-notice" class="hc-permission-notice" hidden>
+          <span class="material-symbols-rounded hc-permission-icon" aria-hidden="true">lock</span>
+          <div class="hc-permission-copy">
+            <strong data-i18n="cookiePermissionTitle">Cần quyền truy cập cookie</strong>
+            <p id="cookie-permission-description"></p>
+          </div>
+          <button
+            type="button"
+            id="cookie-permission-button"
+            class="hc-btn hc-btn-primary hc-permission-button"
+            data-i18n="cookiePermissionAction"
+          >
+            Cho phép truy cập
+          </button>
+        </div>
+        <table id="cookie-table">
           <thead>
             <tr>
               <th data-i18n="cookiesColumnName">Tên</th>

@@ -496,6 +496,57 @@ button:disabled {
   display: block;
 }
 
+.hc-permission-notice {
+  min-height: 250px;
+  padding: 28px 24px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  color: var(--hc-text);
+}
+
+.hc-permission-notice[hidden] {
+  display: none;
+}
+
+.hc-permission-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--hc-toggle-bg);
+  color: #2563eb;
+  font-size: 24px;
+}
+
+.hc-permission-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 310px;
+}
+
+.hc-permission-copy strong {
+  font-size: 14px;
+}
+
+.hc-permission-copy p {
+  margin: 0;
+  color: var(--hc-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.hc-permission-button {
+  margin-top: 4px;
+}
+
 table {
   width: 100%;
   table-layout: auto;

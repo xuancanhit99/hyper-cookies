@@ -1,10 +1,24 @@
+/* global document */
+
 import assert from 'node:assert/strict';
+import http from 'node:http';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import puppeteer from 'puppeteer';
 
 const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const extensionPath = path.join(projectRoot, 'dist');
+const server = http.createServer((_request, response) => {
+  response.writeHead(200, {
+    'content-type': 'text/html; charset=utf-8',
+    'set-cookie': 'hyper_cookie_probe=present; Path=/; HttpOnly; SameSite=Lax'
+  });
+  response.end('<!doctype html><title>Hyper Cookies smoke test</title>');
+});
+await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve));
+const address = server.address();
+assert(address && typeof address !== 'string');
+const pageUrl = `http://127.0.0.1:${address.port}/`;
 
 const browser = await puppeteer.launch({
   headless: true,
@@ -14,23 +28,42 @@ const browser = await puppeteer.launch({
 });
 
 try {
-  const workerTarget = await browser.waitForTarget(
-    (target) => target.type() === 'service_worker' && target.url().endsWith('/background.js'),
+  const page = await browser.newPage();
+  await page.goto(pageUrl);
+  const extension = [...(await browser.extensions()).values()][0];
+  assert(extension);
+  await page.triggerExtensionAction(extension);
+  const popupTarget = await browser.waitForTarget(
+    (target) => target.type() === 'page' && target.url().endsWith('/popup.html'),
     { timeout: 15_000 }
   );
-  const extensionId = new URL(workerTarget.url()).hostname;
-  const page = await browser.newPage();
-  await page.goto(`chrome-extension://${extensionId}/popup.html`);
+  const popup = await popupTarget.asPage();
+  assert(popup);
+  await popup.waitForFunction(
+    (expectedUrl) => document.querySelector('#target-url')?.value === expectedUrl,
+    {},
+    pageUrl
+  );
+  await popup.click('#cookies-tab');
+  await popup.waitForSelector('#cookie-permission-button', { visible: true });
 
-  assert.equal(await page.title(), 'Hyper Cookies');
+  assert.equal(await popup.title(), 'Hyper Cookies');
   assert.equal(
-    await page.$eval('#cookies-tab', (element) => element.textContent?.trim()),
+    await popup.$eval('#cookies-tab', (element) => element.textContent?.trim()),
     'Cookies'
   );
-  assert.equal(await page.$('#pro-toggle'), null);
-  assert.equal(await page.$('#config-blocker'), null);
+  assert.equal(await popup.$eval('#target-url', (element) => element.value), pageUrl);
+  assert.equal(await popup.$eval('#cookie-permission-notice', (element) => element.hidden), false);
+  assert.equal(await popup.$eval('#cookie-table', (element) => element.hidden), true);
+  assert.match(
+    await popup.$eval('#cookie-permission-description', (element) => element.textContent ?? ''),
+    /127\.0\.0\.1/
+  );
+  assert.equal(await popup.$('#pro-toggle'), null);
+  assert.equal(await popup.$('#config-blocker'), null);
 } finally {
   await browser.close();
+  await new Promise((resolve) => server.close(resolve));
 }
 
 console.log('Extension smoke test passed');
