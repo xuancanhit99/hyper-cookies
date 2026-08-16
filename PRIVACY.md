@@ -21,7 +21,7 @@ Hyper Cookies xử lý cookies, URL và `localStorage` để cung cấp chức n
 
 ## Kiểm soát của người dùng
 
-Quyền truy cập cookie cho website HTTP/HTTPS là quyền tùy chọn. Hyper Cookies chỉ yêu cầu quyền cho domain hiện tại sau khi người dùng chủ động bấm **Cho phép truy cập** trong tab Cookies. Người dùng có thể thu hồi quyền này trong phần cài đặt extension của Chrome.
+Hyper Cookies yêu cầu quyền host thường trực trên các website để Chrome Cookies API có thể đọc và quản lý cookie ổn định. Extension chỉ xử lý dữ liệu khi người dùng mở hoặc thao tác trên giao diện extension. Người dùng có thể giới hạn hoặc thu hồi quyền trong phần cài đặt extension của Chrome, nhưng việc đó có thể làm chức năng Cookies ngừng hoạt động.
 
 Người dùng có thể gỡ extension bất kỳ lúc nào để xóa các tùy chọn cục bộ do extension lưu. File đã export nằm ngoài phạm vi lưu trữ của extension và phải được người dùng tự quản lý hoặc xóa.
 

@@ -7,7 +7,7 @@ import {
   type SnapshotPayload
 } from './shared/snapshot';
 import { buildDriveDownloadUrl } from './shared/drive';
-import { safeHostname, toHostPermissionPattern } from './shared/url';
+import { safeHostname } from './shared/url';
 import { MessageType } from './shared/messages';
 
 function getRequiredElement<T extends HTMLElement>(id: string): T {
@@ -19,12 +19,6 @@ function getRequiredElement<T extends HTMLElement>(id: string): T {
 }
 
 const cookieTableBody = getRequiredElement<HTMLTableSectionElement>('cookie-table-body');
-const cookieTable = getRequiredElement<HTMLTableElement>('cookie-table');
-const cookiePermissionNotice = getRequiredElement<HTMLElement>('cookie-permission-notice');
-const cookiePermissionDescription = getRequiredElement<HTMLElement>(
-  'cookie-permission-description'
-);
-const cookiePermissionButton = getRequiredElement<HTMLButtonElement>('cookie-permission-button');
 const storageTableBody = getRequiredElement<HTMLTableSectionElement>('storage-table-body');
 const cookieRowTemplate = getRequiredElement<HTMLTemplateElement>('cookie-row-template');
 const storageRowTemplate = getRequiredElement<HTMLTemplateElement>('storage-row-template');
@@ -115,13 +109,6 @@ const translations = {
     storageColumnKey: 'Key',
     storageColumnValue: 'Giá trị',
     cookiesEmpty: 'Không tìm thấy cookie nào',
-    cookiePermissionTitle: 'Cần quyền truy cập cookie',
-    cookiePermissionDescription:
-      'Cho phép Hyper Cookies đọc và quản lý cookie của {{domain}}. Quyền chỉ áp dụng cho domain này.',
-    cookiePermissionAction: 'Cho phép truy cập',
-    cookiePermissionRequired: 'Hãy cấp quyền cho domain này trước khi tiếp tục',
-    cookiePermissionDenied: 'Bạn chưa cấp quyền truy cập cookie cho domain này',
-    cookiePermissionError: 'Không thể yêu cầu quyền truy cập: {{error}}',
     storageEmpty: 'Không tìm thấy item nào',
     emptyValue: '(trống)',
     sessionCookie: 'Phiên',
@@ -202,13 +189,6 @@ const translations = {
     storageColumnKey: 'Key',
     storageColumnValue: 'Value',
     cookiesEmpty: 'No cookies found',
-    cookiePermissionTitle: 'Cookie access required',
-    cookiePermissionDescription:
-      'Allow Hyper Cookies to read and manage cookies for {{domain}}. Access only applies to this domain.',
-    cookiePermissionAction: 'Allow access',
-    cookiePermissionRequired: 'Allow access for this domain before continuing',
-    cookiePermissionDenied: 'Cookie access was not granted for this domain',
-    cookiePermissionError: 'Unable to request access: {{error}}',
     storageEmpty: 'No items found',
     emptyValue: '(empty)',
     sessionCookie: 'Session',
@@ -269,14 +249,12 @@ let currentTheme = DEFAULT_THEME;
 let autoReloadEnabled = DEFAULT_AUTO_RELOAD;
 let base64ExportEnabled = DEFAULT_BASE64_EXPORT;
 let toastTimeout: ReturnType<typeof setTimeout> | undefined;
-let pendingCookiePermissionUrl: string | null = null;
 
 document.addEventListener('DOMContentLoaded', init);
 refreshBtn.addEventListener('click', () => loadActiveData());
 homeTabBtn.addEventListener('click', () => setActiveView(VIEW_HOME));
 cookiesTabBtn.addEventListener('click', () => setActiveView(VIEW_COOKIES));
 storageTabBtn.addEventListener('click', () => setActiveView(VIEW_STORAGE));
-cookiePermissionButton.addEventListener('click', requestCookiePermission);
 exportJsonBtn.addEventListener('click', () => exportData());
 importJsonBtn.addEventListener('click', () => importFileInput.click());
 importFileInput.addEventListener('change', handleImportFile);
@@ -412,19 +390,11 @@ async function loadActiveData() {
 async function loadCookies() {
   const url = targetUrlInput.value.trim();
   if (!url) {
-    hideCookiePermissionNotice();
     showToast(t('enterValidUrl'), true);
     return;
   }
   setLoading(true);
   try {
-    if (!(await hasCookieHostPermission(url))) {
-      currentCookies = [];
-      renderCookies();
-      showCookiePermissionNotice(url);
-      return;
-    }
-    hideCookiePermissionNotice();
     const response = await chrome.runtime.sendMessage({
       type: MessageType.GetCookies,
       payload: { url }
@@ -439,65 +409,6 @@ async function loadCookies() {
     showToast(t('loadCookiesError', { error: formatError(error) }), true);
   } finally {
     setLoading(false);
-  }
-}
-
-async function hasCookieHostPermission(url: string): Promise<boolean> {
-  const origin = toHostPermissionPattern(url);
-  return Boolean(origin && (await chrome.permissions.contains({ origins: [origin] })));
-}
-
-function showCookiePermissionNotice(url: string) {
-  pendingCookiePermissionUrl = url;
-  cookiePermissionNotice.hidden = false;
-  cookieTable.hidden = true;
-  updateCookiePermissionDescription();
-}
-
-function hideCookiePermissionNotice() {
-  pendingCookiePermissionUrl = null;
-  cookiePermissionNotice.hidden = true;
-  cookieTable.hidden = false;
-}
-
-function updateCookiePermissionDescription() {
-  if (!pendingCookiePermissionUrl) return;
-  cookiePermissionDescription.textContent = t('cookiePermissionDescription', {
-    domain: safeHostname(pendingCookiePermissionUrl) || pendingCookiePermissionUrl
-  });
-}
-
-function focusCookiePermissionNotice(url: string) {
-  currentCookies = [];
-  renderCookies();
-  showCookiePermissionNotice(url);
-  if (activeView !== VIEW_COOKIES) {
-    activeView = VIEW_COOKIES;
-    updateViewUI();
-  }
-}
-
-async function requestCookiePermission() {
-  const url = pendingCookiePermissionUrl || targetUrlInput.value.trim();
-  const origin = toHostPermissionPattern(url);
-  if (!origin) {
-    showToast(t('enterValidUrl'), true);
-    return;
-  }
-
-  cookiePermissionButton.disabled = true;
-  try {
-    const granted = await chrome.permissions.request({ origins: [origin] });
-    if (!granted) {
-      showToast(t('cookiePermissionDenied'), true);
-      return;
-    }
-    await loadCookies();
-  } catch (error) {
-    console.error('Cookie permission request failed', error);
-    showToast(t('cookiePermissionError', { error: formatError(error) }), true);
-  } finally {
-    cookiePermissionButton.disabled = false;
   }
 }
 
@@ -661,11 +572,6 @@ async function exportData() {
   }
   if (!activeTab?.id) {
     showToast(t('exportTabMissing'), true);
-    return;
-  }
-  if (!(await hasCookieHostPermission(url))) {
-    focusCookiePermissionNotice(url);
-    showToast(t('cookiePermissionRequired'), true);
     return;
   }
 
@@ -879,7 +785,6 @@ function setLoading(isLoading) {
   refreshBtn.disabled = isLoading;
   exportJsonBtn.disabled = isLoading;
   importJsonBtn.disabled = isLoading;
-  cookiePermissionButton.disabled = isLoading;
   if (importDriveBtn) {
     importDriveBtn.disabled = isLoading;
   }
@@ -1115,11 +1020,6 @@ async function handleClearAll() {
     showToast(t('unknownTab'), true);
     return;
   }
-  if (!(await hasCookieHostPermission(url))) {
-    focusCookiePermissionNotice(url);
-    showToast(t('cookiePermissionRequired'), true);
-    return;
-  }
   const confirmed = confirm(t('clearAllConfirm'));
   if (!confirmed) return;
   try {
@@ -1207,7 +1107,6 @@ function applyTranslations() {
   updateLanguageToggle();
   updateThemeToggleIcon();
   updateExportImportLabels();
-  updateCookiePermissionDescription();
 }
 
 function applyTheme() {

@@ -1,5 +1,4 @@
 import { MessageType } from './shared/messages';
-import { toHostPermissionPattern } from './shared/url';
 
 // Service worker cho Hyper Cookies
 
@@ -122,17 +121,8 @@ async function handleGetCookies({ url }) {
     throw new Error('URL không hợp lệ');
   }
 
-  await requireCookieHostPermission(url);
-
   const cookies = await chrome.cookies.getAll({ url });
   return cookies;
-}
-
-async function requireCookieHostPermission(url) {
-  const origin = toHostPermissionPattern(url);
-  if (!origin || !(await chrome.permissions.contains({ origins: [origin] }))) {
-    throw new Error('Chưa được cấp quyền đọc cookie cho domain này');
-  }
 }
 
 async function handleGetLocalStorage(tabId) {
@@ -350,8 +340,6 @@ async function renameLocalStorageKey({ tabId, oldKey, newKey }) {
 async function clearAllData({ url, tabId }) {
   if (!url) throw new Error('URL không hợp lệ');
   if (!tabId) throw new Error('Tab ID không hợp lệ');
-
-  await requireCookieHostPermission(url);
 
   const cookies = await chrome.cookies.getAll({ url });
   let removedCookies = 0;

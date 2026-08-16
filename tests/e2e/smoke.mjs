@@ -45,7 +45,11 @@ try {
     pageUrl
   );
   await popup.click('#cookies-tab');
-  await popup.waitForSelector('#cookie-permission-button', { visible: true });
+  await popup.waitForFunction(() =>
+    [...document.querySelectorAll('#cookie-table-body tr')].some((row) =>
+      row.textContent?.includes('hyper_cookie_probe')
+    )
+  );
 
   assert.equal(await popup.title(), 'Hyper Cookies');
   assert.equal(
@@ -53,12 +57,11 @@ try {
     'Cookies'
   );
   assert.equal(await popup.$eval('#target-url', (element) => element.value), pageUrl);
-  assert.equal(await popup.$eval('#cookie-permission-notice', (element) => element.hidden), false);
-  assert.equal(await popup.$eval('#cookie-table', (element) => element.hidden), true);
   assert.match(
-    await popup.$eval('#cookie-permission-description', (element) => element.textContent ?? ''),
-    /127\.0\.0\.1/
+    await popup.$eval('#cookie-table-body', (element) => element.textContent ?? ''),
+    /hyper_cookie_probe/
   );
+  assert.equal(await popup.$('#cookie-permission-button'), null);
   assert.equal(await popup.$('#pro-toggle'), null);
   assert.equal(await popup.$('#config-blocker'), null);
 } finally {

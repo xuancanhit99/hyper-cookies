@@ -30,13 +30,12 @@ npm run test:e2e
 ## Quyền truy cập
 
 - `activeTab`: quyền tạm thời với tab mà người dùng chủ động mở extension.
-- `cookies`: sử dụng Chrome Cookies API sau khi domain đã được cấp quyền.
-- Quyền host HTTP/HTTPS là quyền tùy chọn: extension chỉ yêu cầu khi người dùng bấm **Cho phép truy cập** trong tab Cookies và chỉ xin quyền cho domain hiện tại.
+- `cookies`: đọc và thay đổi cookie thông qua Chrome Cookies API.
+- `<all_urls>`: cấp quyền host thường trực để Cookies API hoạt động ổn định trên mọi website HTTP/HTTPS.
 - `scripting`: đọc và thay đổi `localStorage` của tab hiện tại.
 - `storage`: lưu ngôn ngữ, theme và các tùy chọn cục bộ.
-- `https://drive.google.com/*` và `https://drive.usercontent.google.com/*`: tải file import do người dùng cung cấp.
 
-Extension không có quyền `<all_urls>` thường trực.
+Chrome sẽ hiển thị cảnh báo quyền đọc và thay đổi dữ liệu trên các website khi cài hoặc cập nhật extension. Đây là quyền rộng và chỉ nên cài extension từ bản phát hành tin cậy.
 
 ## Scripts
 
@@ -50,6 +49,6 @@ Extension không có quyền `<all_urls>` thường trực.
 
 ## Phát hành
 
-Manifest và `package.json` phải có cùng version. Tạo tag đúng định dạng, ví dụ `v1.1.1`; GitHub Actions sẽ kiểm tra quality gate, build file ZIP, tạo SHA-256, attestation và GitHub Release.
+Manifest và `package.json` phải có cùng version. Tạo tag đúng định dạng, ví dụ `v1.1.2`; GitHub Actions sẽ kiểm tra quality gate, build file ZIP, tạo SHA-256, attestation và GitHub Release.
 
 Xem thêm [PRIVACY.md](PRIVACY.md), [SECURITY.md](SECURITY.md) và [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).

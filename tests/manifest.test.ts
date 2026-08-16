@@ -5,14 +5,10 @@ const manifest = JSON.parse(readFileSync('manifest.json', 'utf8'));
 const packageJson = JSON.parse(readFileSync('package.json', 'utf8'));
 
 describe('production manifest', () => {
-  it('uses activeTab without persistent access to every URL', () => {
+  it('has persistent host access required by the cookies API', () => {
     expect(manifest.permissions).toContain('activeTab');
-    expect(manifest.host_permissions).not.toContain('<all_urls>');
-    expect(manifest.host_permissions).toEqual([
-      'https://drive.google.com/*',
-      'https://drive.usercontent.google.com/*'
-    ]);
-    expect(manifest.optional_host_permissions).toEqual(['http://*/*', 'https://*/*']);
+    expect(manifest.host_permissions).toEqual(['<all_urls>']);
+    expect(manifest.optional_host_permissions).toBeUndefined();
   });
 
   it('keeps package and extension versions aligned', () => {
