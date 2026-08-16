@@ -16,7 +16,7 @@ Hyper Cookies xử lý cookies, URL và `localStorage` để cung cấp chức n
 - Cookies và `localStorage` chỉ được đọc hoặc ghi trên thiết bị của người dùng.
 - File export được tạo cục bộ và lưu tại vị trí do người dùng kiểm soát.
 - Extension không gửi cookies, `localStorage` hay lịch sử duyệt web tới máy chủ của nhà phát triển.
-- Khi người dùng chọn import từ Google Drive, extension chỉ tải URL mà người dùng cung cấp từ các host Google Drive đã khai báo.
+- Khi người dùng chọn import từ Google Drive, extension chỉ chấp nhận HTTPS trên `drive.google.com` và `drive.usercontent.google.com`; request có timeout và giới hạn phản hồi 10 MB.
 - Extension không có telemetry, analytics hay quảng cáo.
 
 ## Kiểm soát của người dùng
@@ -27,7 +27,9 @@ Người dùng có thể gỡ extension bất kỳ lúc nào để xóa các tù
 
 ## Lưu ý bảo mật
 
-File export có thể chứa thông tin xác thực nhạy cảm. Phiên bản hiện tại hỗ trợ JSON hoặc Base64; Base64 không phải mã hóa. Không chia sẻ file export với người không tin cậy.
+File export có thể chứa thông tin xác thực nhạy cảm. Metadata chỉ giữ origin của trang và loại bỏ credentials, path, query cùng fragment, nhưng cookies và `localStorage` vẫn được giữ nguyên. Phiên bản hiện tại hỗ trợ JSON hoặc Base64; Base64 không phải encryption. Không chia sẻ file export với người không tin cậy.
+
+File import được kiểm tra schema, domain, số lượng item và kích thước trước khi áp dụng. Import khác website cần xác nhận; cookie sau đó được giới hạn thành host-only cookie của tab hiện tại. Chỉ import snapshot từ nguồn tin cậy.
 
 ## Liên hệ
 

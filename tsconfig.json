@@ -5,7 +5,7 @@
     "moduleResolution": "Bundler",
     "lib": ["ES2022", "DOM", "DOM.Iterable"],
     "types": ["chrome", "node", "vitest/globals"],
-    "strict": false,
+    "strict": true,
     "noEmit": true,
     "allowUnreachableCode": false,
     "allowUnusedLabels": false,

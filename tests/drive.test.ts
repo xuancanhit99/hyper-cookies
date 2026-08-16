@@ -13,8 +13,8 @@ describe('Google Drive URL conversion', () => {
     expect(buildDriveDownloadUrl(url)).toBe(url);
   });
 
-  it('preserves the existing behavior for non-Drive URLs', () => {
-    const url = 'https://example.com/export.json';
-    expect(buildDriveDownloadUrl(url)).toBe(url);
+  it('rejects non-Drive and lookalike URLs', () => {
+    expect(() => buildDriveDownloadUrl('https://example.com/export.json')).toThrow();
+    expect(() => buildDriveDownloadUrl('https://drive.google.com.attacker.example/file')).toThrow();
   });
 });

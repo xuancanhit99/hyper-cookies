@@ -1,14 +1,17 @@
 import {
+  assertImportSize,
   decodeExportEnvelope,
   parseImportText,
+  validateImportPayload,
   wrapPayloadWithBase64,
   type ImportPayload,
   type LocalStorageEntry,
   type SnapshotPayload
 } from './shared/snapshot';
-import { buildDriveDownloadUrl } from './shared/drive';
-import { safeHostname } from './shared/url';
+import { buildDriveDownloadUrl, isAllowedDriveHost } from './shared/drive';
+import { safeHostname, sanitizeSourceUrl } from './shared/url';
 import { MessageType } from './shared/messages';
+import { prepareCookiesForTarget } from './shared/cookies';
 
 function getRequiredElement<T extends HTMLElement>(id: string): T {
   const element = document.getElementById(id);
@@ -64,6 +67,7 @@ const DEFAULT_LANGUAGE = 'vi';
 const DEFAULT_THEME = 'light';
 const DEFAULT_AUTO_RELOAD = true;
 const DEFAULT_BASE64_EXPORT = true;
+const DRIVE_FETCH_TIMEOUT_MS = 15_000;
 const FLAG_BY_LANG = {
   vi: {
     src: 'images/vn.svg',
@@ -93,7 +97,10 @@ const translations = {
     importDriveLinkLabel: 'Link Google Drive',
     importDrivePlaceholder: 'https://drive.google.com/...',
     importDriveUrlMissing: 'Nhập link Google Drive hợp lệ',
+    importDriveInvalidUrl: 'Chỉ hỗ trợ link HTTPS từ Google Drive',
     importDriveFetchError: 'Không thể tải file: {{error}}',
+    importDriveTimeout: 'Google Drive phản hồi quá lâu',
+    importDriveInvalidResponse: 'Google Drive trả về nội dung không hợp lệ',
     importDriveStart: 'Import',
     cancel: 'Huỷ',
     closeModal: 'Đóng',
@@ -101,7 +108,8 @@ const translations = {
     clearAllConfirm: 'Xóa tất cả cookies và local storage của trang này?',
     clearAllSuccess: 'Đã xóa cookies và local storage',
     clearAllError: 'Xóa thất bại: {{error}}',
-    base64ExportLabel: 'Mã hóa khi export',
+    clearAllPartial: 'Đã xóa local storage nhưng có {{count}} cookie không xóa được',
+    base64ExportLabel: 'Mã hóa Base64 khi export',
     cookiesColumnName: 'Tên',
     cookiesColumnDomain: 'Domain',
     cookiesColumnExpiry: 'Hết hạn',
@@ -134,6 +142,8 @@ const translations = {
     importHostMismatch:
       'Dữ liệu được export từ {{source}}, trong khi tab hiện tại là {{current}}. Bạn có chắc muốn import?',
     importSuccess: 'Import thành công',
+    importPartial: 'Import không hoàn tất: thành công {{imported}}/{{requested}} item',
+    importCookieRejected: '{{count}} cookie không hợp lệ hoặc không thuộc domain đích',
     importUrlMissing: 'Chưa xác định URL để import cookie',
     importTabMissing: 'Không xác định được tab hiện tại',
     importError: 'Import thất bại: {{error}}',
@@ -142,6 +152,8 @@ const translations = {
     validatePayloadMissingData: 'File không chứa dữ liệu hợp lệ',
     validatePayloadUnsupportedVersion: 'Phiên bản file không được hỗ trợ',
     validatePayloadInvalid: 'File import không hợp lệ',
+    validatePayloadTooLarge: 'File import vượt quá giới hạn 10 MB',
+    validatePayloadTooManyItems: 'File import chứa quá nhiều item',
     copyUrlTitle: 'Copy URL hiện tại',
     refreshTooltip: 'Tải lại dữ liệu',
     deleteCookieTitle: 'Xóa cookie',
@@ -173,7 +185,10 @@ const translations = {
     importDriveLinkLabel: 'Google Drive link',
     importDrivePlaceholder: 'https://drive.google.com/...',
     importDriveUrlMissing: 'Enter a Google Drive link',
+    importDriveInvalidUrl: 'Only HTTPS Google Drive links are supported',
     importDriveFetchError: 'Unable to fetch file: {{error}}',
+    importDriveTimeout: 'Google Drive took too long to respond',
+    importDriveInvalidResponse: 'Google Drive returned invalid content',
     importDriveStart: 'Import',
     cancel: 'Cancel',
     closeModal: 'Close',
@@ -181,6 +196,7 @@ const translations = {
     clearAllConfirm: 'Clear all cookies and local storage for this page?',
     clearAllSuccess: 'All cookies and local storage cleared',
     clearAllError: 'Clear failed: {{error}}',
+    clearAllPartial: 'Local storage was cleared, but {{count}} cookies could not be removed',
     base64ExportLabel: 'Encode export',
     cookiesColumnName: 'Name',
     cookiesColumnDomain: 'Domain',
@@ -214,6 +230,8 @@ const translations = {
     importHostMismatch:
       'Data was exported from {{source}} while the current tab is {{current}}. Do you still want to import?',
     importSuccess: 'Import successful',
+    importPartial: 'Import incomplete: {{imported}}/{{requested}} items succeeded',
+    importCookieRejected: '{{count}} cookies are invalid or unrelated to the target domain',
     importUrlMissing: 'No URL available to import cookies into',
     importTabMissing: 'Cannot determine the current tab',
     importError: 'Import failed: {{error}}',
@@ -222,6 +240,8 @@ const translations = {
     validatePayloadMissingData: 'File does not contain valid data',
     validatePayloadUnsupportedVersion: 'File version is not supported',
     validatePayloadInvalid: 'Invalid import file',
+    validatePayloadTooLarge: 'Import file exceeds the 10 MB limit',
+    validatePayloadTooManyItems: 'Import file contains too many items',
     copyUrlTitle: 'Copy current URL',
     refreshTooltip: 'Reload data',
     deleteCookieTitle: 'Delete cookie',
@@ -240,12 +260,21 @@ const translations = {
   }
 };
 
+type Language = keyof typeof translations;
+type Theme = 'light' | 'dark';
+type View = typeof VIEW_HOME | typeof VIEW_COOKIES | typeof VIEW_STORAGE;
+type CookieChanges = Partial<
+  Pick<chrome.cookies.Cookie, 'name' | 'value' | 'domain' | 'expirationDate'>
+>;
+type InlineEditorResult = string | { display: string } | null | undefined;
+type InlineSave = (newValue: string) => InlineEditorResult | Promise<InlineEditorResult>;
+
 let currentCookies: chrome.cookies.Cookie[] = [];
 let currentStorageEntries: LocalStorageEntry[] = [];
-let activeView = VIEW_HOME;
+let activeView: View = VIEW_HOME;
 let activeTab: chrome.tabs.Tab | null = null;
-let currentLanguage = DEFAULT_LANGUAGE;
-let currentTheme = DEFAULT_THEME;
+let currentLanguage: Language = DEFAULT_LANGUAGE;
+let currentTheme: Theme = DEFAULT_THEME;
 let autoReloadEnabled = DEFAULT_AUTO_RELOAD;
 let base64ExportEnabled = DEFAULT_BASE64_EXPORT;
 let toastTimeout: ReturnType<typeof setTimeout> | undefined;
@@ -311,16 +340,16 @@ async function loadPreferences() {
       AUTO_RELOAD_KEY,
       BASE64_EXPORT_KEY
     ]);
-    const pendingSaves = [];
+    const pendingSaves: Promise<void>[] = [];
     const storedLanguage = stored[LANGUAGE_STORAGE_KEY];
-    if (typeof storedLanguage === 'string' && translations[storedLanguage]) {
+    if (isLanguage(storedLanguage)) {
       currentLanguage = storedLanguage;
     } else {
       currentLanguage = DEFAULT_LANGUAGE;
       pendingSaves.push(savePreference(LANGUAGE_STORAGE_KEY, currentLanguage));
     }
     const storedTheme = stored[THEME_STORAGE_KEY];
-    if (typeof storedTheme === 'string') {
+    if (storedTheme === 'light' || storedTheme === 'dark') {
       currentTheme = storedTheme;
     } else {
       currentTheme = DEFAULT_THEME;
@@ -397,7 +426,7 @@ async function loadCookies() {
   try {
     const response = await chrome.runtime.sendMessage({
       type: MessageType.GetCookies,
-      payload: { url }
+      payload: { url, tabId: activeTab?.id }
     });
     if (response.error) {
       throw new Error(response.error);
@@ -512,35 +541,36 @@ function renderLocalStorage() {
   });
 }
 
-function formatExpiry(cookie) {
+function formatExpiry(cookie: chrome.cookies.Cookie): string {
   if (!cookie.expirationDate) return t('sessionCookie');
   return new Date(cookie.expirationDate * 1000).toLocaleString();
 }
 
-async function confirmDeleteCookie(cookie) {
+async function confirmDeleteCookie(cookie: chrome.cookies.Cookie) {
   if (!confirm(t('deleteCookieConfirm', { name: cookie.name }))) return;
-  const protocol = cookie.secure ? 'https://' : 'http://';
-  const path = cookie.path || '/';
-  const url = `${protocol}${cookie.domain.replace(/^\./, '')}${path}`;
+  const fallbackUrl = targetUrlInput.value.trim() || activeTab?.url;
+  if (!fallbackUrl) {
+    showToast(t('enterValidUrl'), true);
+    return;
+  }
 
   try {
     const response = await chrome.runtime.sendMessage({
       type: MessageType.DeleteCookie,
-      payload: { url, name: cookie.name, storeId: cookie.storeId }
+      payload: { cookie, fallbackUrl }
     });
-    if (response?.error) {
-      throw new Error(response.error);
+    if (response?.error || !response?.details) {
+      throw new Error(response?.error || t('updateErrorGeneric'));
     }
     showToast(t('deleteCookieSuccess', { name: cookie.name }));
-    currentCookies = currentCookies.filter((item) => item.name !== cookie.name);
-    renderCookies();
+    await loadCookies();
   } catch (error) {
     console.error(error);
     showToast(t('deleteCookieError', { error: formatError(error) }), true);
   }
 }
 
-async function confirmDeleteStorage(entry) {
+async function confirmDeleteStorage(entry: LocalStorageEntry) {
   if (!confirm(t('deleteStorageConfirm', { key: entry.key }))) return;
   if (!activeTab?.id) {
     showToast(t('unknownTab'), true);
@@ -578,7 +608,10 @@ async function exportData() {
   setLoading(true);
   try {
     const [cookiesResponse, storageResponse] = await Promise.all([
-      chrome.runtime.sendMessage({ type: MessageType.GetCookies, payload: { url } }),
+      chrome.runtime.sendMessage({
+        type: MessageType.GetCookies,
+        payload: { url, tabId: activeTab.id }
+      }),
       chrome.runtime.sendMessage({
         type: MessageType.GetLocalStorage,
         payload: { tabId: activeTab.id }
@@ -590,12 +623,13 @@ async function exportData() {
     const exportPayload: SnapshotPayload = {
       version: 1,
       exportedAt: new Date().toISOString(),
-      sourceUrl: url,
+      sourceUrl: sanitizeSourceUrl(url),
       sourceHostname: safeHostname(url),
       cookies: cookiesResponse.cookies || [],
       localStorage: storageResponse.entries || []
     };
-    const filenameBase = `hyper-cookies-export-${exportPayload.sourceHostname || 'data'}`;
+    const filenameHost = (exportPayload.sourceHostname || 'data').replace(/[^a-z0-9._-]/gi, '_');
+    const filenameBase = `hyper-cookies-export-${filenameHost}`;
     if (base64ExportEnabled) {
       const encoded = wrapPayloadWithBase64(exportPayload);
       downloadText(encoded, `${filenameBase}-encoded.txt`);
@@ -611,29 +645,44 @@ async function exportData() {
   }
 }
 
-async function handleImportFile(event) {
-  const file = event.target.files?.[0];
+async function handleImportFile(event: Event) {
+  const input = event.currentTarget as HTMLInputElement;
+  const file = input.files?.[0];
   if (!file) return;
   try {
+    assertImportSize(file.size, t('validatePayloadTooLarge'));
     const text = await file.text();
+    assertImportSize(new TextEncoder().encode(text).byteLength, t('validatePayloadTooLarge'));
     const payload = parseImportText(text, t('validatePayloadInvalid'));
     await processImportedPayload(payload);
   } catch (error) {
     console.error(error);
     showToast(t('importError', { error: formatError(error) }), true);
   } finally {
-    event.target.value = '';
+    input.value = '';
   }
 }
 
-async function processImportedPayload(rawPayload) {
+async function processImportedPayload(rawPayload: unknown) {
   const payload = decodeExportEnvelope(rawPayload, t('validatePayloadInvalid'));
-  validateImportPayload(payload);
+  validateImportPayload(payload, {
+    invalid: t('validatePayloadInvalid'),
+    unsupportedVersion: t('validatePayloadUnsupportedVersion'),
+    missingData: t('validatePayloadMissingData'),
+    tooManyItems: t('validatePayloadTooManyItems')
+  });
   const sourceHost = payload.sourceHostname || safeHostname(payload.sourceUrl);
   const currentHost = safeHostname(activeTab?.url || targetUrlInput.value);
   if (sourceHost && currentHost && sourceHost !== currentHost) {
     const proceed = confirm(t('importHostMismatch', { source: sourceHost, current: currentHost }));
     if (!proceed) return;
+  }
+  if (Array.isArray(payload.cookies) && payload.cookies.length) {
+    const prepared = prepareCookiesForTarget(payload.cookies, sourceHost, targetUrlInput.value);
+    if (prepared.failures.length) {
+      throw new Error(t('importCookieRejected', { count: prepared.failures.length }));
+    }
+    payload.cookies = prepared.cookies;
   }
   await importData(payload);
 }
@@ -648,10 +697,15 @@ async function importData(payload: ImportPayload) {
     if (Array.isArray(payload.cookies) && payload.cookies.length) {
       const response = await chrome.runtime.sendMessage({
         type: MessageType.SetCookies,
-        payload: { cookies: payload.cookies, targetUrl: url }
+        payload: { cookies: payload.cookies, targetUrl: url, tabId: activeTab.id }
       });
       if (response?.error) {
         throw new Error(t('setCookiesError', { error: response.error }));
+      }
+      if (response.failed || response.imported !== response.requested) {
+        throw new Error(
+          t('importPartial', { imported: response.imported, requested: response.requested })
+        );
       }
     }
 
@@ -662,6 +716,11 @@ async function importData(payload: ImportPayload) {
       });
       if (response?.error) {
         throw new Error(t('setStorageError', { error: response.error }));
+      }
+      if (response.failed || response.imported !== response.requested) {
+        throw new Error(
+          t('importPartial', { imported: response.imported, requested: response.requested })
+        );
       }
     }
 
@@ -693,7 +752,7 @@ function closeDriveImportModal() {
   }
 }
 
-async function handleDriveImportSubmit(event) {
+async function handleDriveImportSubmit(event: Event) {
   event.preventDefault();
   if (!driveUrlInput) return;
   const driveLink = driveUrlInput.value.trim();
@@ -714,17 +773,71 @@ async function handleDriveImportSubmit(event) {
   }
 }
 
-async function fetchDrivePayload(url) {
-  const downloadUrl = buildDriveDownloadUrl(url);
-  const response = await fetch(downloadUrl);
-  if (!response.ok) {
-    throw new Error(t('importDriveFetchError', { error: response.statusText || response.status }));
+async function fetchDrivePayload(url: string): Promise<unknown> {
+  let downloadUrl;
+  try {
+    downloadUrl = buildDriveDownloadUrl(url);
+  } catch (error) {
+    throw new Error(t('importDriveInvalidUrl'), { cause: error });
   }
-  const text = await response.text();
-  return parseImportText(text, t('validatePayloadInvalid'));
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), DRIVE_FETCH_TIMEOUT_MS);
+  try {
+    const response = await fetch(downloadUrl, { signal: controller.signal });
+    if (!response.ok) {
+      throw new Error(
+        t('importDriveFetchError', { error: response.statusText || response.status })
+      );
+    }
+    if (!isAllowedDriveHost(new URL(response.url).hostname)) {
+      throw new Error(t('importDriveInvalidResponse'));
+    }
+    const contentType = response.headers.get('content-type') || '';
+    if (contentType.includes('text/html')) {
+      throw new Error(t('importDriveInvalidResponse'));
+    }
+    const contentLength = Number(response.headers.get('content-length'));
+    if (Number.isFinite(contentLength) && contentLength > 0) {
+      assertImportSize(contentLength, t('validatePayloadTooLarge'));
+    }
+    const text = await readResponseText(response);
+    return parseImportText(text, t('validatePayloadInvalid'));
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      throw new Error(t('importDriveTimeout'), { cause: error });
+    }
+    throw error;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
-function setDriveImportLoading(isLoading) {
+async function readResponseText(response: Response): Promise<string> {
+  if (!response.body) {
+    const text = await response.text();
+    assertImportSize(new TextEncoder().encode(text).byteLength, t('validatePayloadTooLarge'));
+    return text;
+  }
+  const reader = response.body.getReader();
+  const decoder = new TextDecoder();
+  let totalBytes = 0;
+  let text = '';
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      assertImportSize(totalBytes, t('validatePayloadTooLarge'));
+      text += decoder.decode(value, { stream: true });
+    }
+  } catch (error) {
+    await reader.cancel(error).catch(() => undefined);
+    throw error;
+  }
+  return text + decoder.decode();
+}
+
+function setDriveImportLoading(isLoading: boolean) {
   if (driveSubmitBtn) {
     driveSubmitBtn.disabled = isLoading;
   }
@@ -736,7 +849,7 @@ function setDriveImportLoading(isLoading) {
   }
 }
 
-function downloadJSON(data, filename) {
+function downloadJSON(data: unknown, filename: string) {
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
@@ -748,7 +861,7 @@ function downloadJSON(data, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-function downloadText(content, filename) {
+function downloadText(content: string, filename: string) {
   const blob = new Blob([content], { type: 'text/plain' });
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
@@ -760,20 +873,7 @@ function downloadText(content, filename) {
   setTimeout(() => URL.revokeObjectURL(url), 0);
 }
 
-function validateImportPayload(payload: unknown): asserts payload is ImportPayload {
-  if (!payload || typeof payload !== 'object') {
-    throw new Error(t('validatePayloadInvalid'));
-  }
-  const candidate = payload as ImportPayload;
-  if (candidate.version && candidate.version !== 1) {
-    throw new Error(t('validatePayloadUnsupportedVersion'));
-  }
-  if (!Array.isArray(candidate.cookies) && !Array.isArray(candidate.localStorage)) {
-    throw new Error(t('validatePayloadMissingData'));
-  }
-}
-
-function showToast(message, isError = false) {
+function showToast(message: string, isError = false) {
   toastEl.textContent = message;
   toastEl.style.background = isError ? 'var(--hc-toast-error)' : 'var(--hc-toast-success)';
   toastEl.classList.add('show');
@@ -781,7 +881,7 @@ function showToast(message, isError = false) {
   toastTimeout = setTimeout(() => toastEl.classList.remove('show'), 2500);
 }
 
-function setLoading(isLoading) {
+function setLoading(isLoading: boolean) {
   refreshBtn.disabled = isLoading;
   exportJsonBtn.disabled = isLoading;
   importJsonBtn.disabled = isLoading;
@@ -794,7 +894,7 @@ function setLoading(isLoading) {
   }
 }
 
-function setActiveView(view) {
+function setActiveView(view: View) {
   if (activeView === view) return;
   activeView = view;
   updateViewUI();
@@ -817,7 +917,7 @@ function updateViewUI() {
   );
 }
 
-function handleEditCookieValue(cookie, cell) {
+function handleEditCookieValue(cookie: chrome.cookies.Cookie, cell: HTMLElement) {
   openInlineEditor(cell, cookie.value || '', async (newValue) => {
     if ((cookie.value ?? '') === newValue) {
       return cookie.value ?? '';
@@ -829,7 +929,7 @@ function handleEditCookieValue(cookie, cell) {
   });
 }
 
-function handleEditCookieName(cookie, cell) {
+function handleEditCookieName(cookie: chrome.cookies.Cookie, cell: HTMLElement) {
   openInlineEditor(cell, cookie.name || '', async (newValue) => {
     const trimmed = newValue.trim();
     if (!trimmed) {
@@ -845,7 +945,7 @@ function handleEditCookieName(cookie, cell) {
   });
 }
 
-function handleEditCookieDomain(cookie, cell) {
+function handleEditCookieDomain(cookie: chrome.cookies.Cookie, cell: HTMLElement) {
   openInlineEditor(cell, cookie.domain || '', async (newValue) => {
     const trimmed = newValue.trim();
     if (!trimmed) {
@@ -861,7 +961,7 @@ function handleEditCookieDomain(cookie, cell) {
   });
 }
 
-function handleEditCookieExpiry(cookie, cell) {
+function handleEditCookieExpiry(cookie: chrome.cookies.Cookie, cell: HTMLElement) {
   const isoValue = cookie.expirationDate
     ? new Date(cookie.expirationDate * 1000).toISOString()
     : '';
@@ -881,7 +981,7 @@ function handleEditCookieExpiry(cookie, cell) {
   });
 }
 
-function handleEditStorageValue(entry, cell) {
+function handleEditStorageValue(entry: LocalStorageEntry, cell: HTMLElement) {
   openInlineEditor(cell, entry.value || '', async (newValue) => {
     if ((entry.value ?? '') === newValue) {
       return entry.value ?? '';
@@ -893,7 +993,7 @@ function handleEditStorageValue(entry, cell) {
   });
 }
 
-function handleEditStorageKey(entry, cell) {
+function handleEditStorageKey(entry: LocalStorageEntry, cell: HTMLElement) {
   openInlineEditor(cell, entry.key || '', async (newValue) => {
     const trimmed = newValue.trim();
     if (!trimmed) {
@@ -909,7 +1009,7 @@ function handleEditStorageKey(entry, cell) {
   });
 }
 
-async function updateCookieFieldsRequest(cookie, changes) {
+async function updateCookieFieldsRequest(cookie: chrome.cookies.Cookie, changes: CookieChanges) {
   const fallbackUrl = targetUrlInput.value.trim() || activeTab?.url;
   if (!fallbackUrl) {
     throw new Error(t('enterValidUrl'));
@@ -924,7 +1024,7 @@ async function updateCookieFieldsRequest(cookie, changes) {
   Object.assign(cookie, response.updatedCookie || { ...cookie, ...changes });
 }
 
-async function updateStorageValueRequest(entry, newValue) {
+async function updateStorageValueRequest(entry: LocalStorageEntry, newValue: string) {
   if (!activeTab?.id) {
     throw new Error(t('unknownTab'));
   }
@@ -938,7 +1038,7 @@ async function updateStorageValueRequest(entry, newValue) {
   entry.value = newValue;
 }
 
-async function renameStorageKeyRequest(entry, newKey) {
+async function renameStorageKeyRequest(entry: LocalStorageEntry, newKey: string) {
   if (!activeTab?.id) {
     throw new Error(t('unknownTab'));
   }
@@ -952,7 +1052,7 @@ async function renameStorageKeyRequest(entry, newKey) {
   entry.key = newKey;
 }
 
-function openInlineEditor(cell, initialValue, onSave) {
+function openInlineEditor(cell: HTMLElement, initialValue: string, onSave: InlineSave) {
   if (!cell || cell.dataset.editing === 'true') return;
   cell.dataset.editing = 'true';
   const editor = document.createElement('textarea');
@@ -965,13 +1065,11 @@ function openInlineEditor(cell, initialValue, onSave) {
   editor.select();
 
   let isSaving = false;
-  const cleanup = (result) => {
+  const cleanup = (result: InlineEditorResult) => {
     cell.dataset.editing = 'false';
     cell.innerHTML = '';
-    let displayValue = result;
-    if (result && typeof result === 'object' && 'display' in result) {
-      displayValue = result.display;
-    }
+    let displayValue: string | null | undefined =
+      typeof result === 'string' || result == null ? result : result.display;
     if (displayValue == null || displayValue === '') {
       displayValue = t('emptyValue');
     }
@@ -992,7 +1090,7 @@ function openInlineEditor(cell, initialValue, onSave) {
     } catch (error) {
       console.error('Inline edit failed', error);
       cleanup(originalValue);
-      showToast(error.message || t('updateErrorGeneric'), true);
+      showToast(formatError(error) || t('updateErrorGeneric'), true);
     }
   };
 
@@ -1030,6 +1128,9 @@ async function handleClearAll() {
     if (response?.error) {
       throw new Error(response.error);
     }
+    if (response.failedCookies) {
+      throw new Error(t('clearAllPartial', { count: response.failedCookies }));
+    }
     showToast(t('clearAllSuccess'));
     await loadActiveData();
     if (autoReloadEnabled && activeTab?.id) {
@@ -1065,8 +1166,8 @@ async function copyUrlToClipboard() {
   }
 }
 
-async function setLanguage(lang) {
-  const nextLanguage = translations[lang] ? lang : DEFAULT_LANGUAGE;
+async function setLanguage(lang: string) {
+  const nextLanguage: Language = isLanguage(lang) ? lang : DEFAULT_LANGUAGE;
   if (nextLanguage === currentLanguage) return;
   currentLanguage = nextLanguage;
   await savePreference(LANGUAGE_STORAGE_KEY, nextLanguage);
@@ -1147,13 +1248,13 @@ function updateLanguageToggle() {
   languageToggleBtn.setAttribute('aria-label', t('languageToggle'));
 }
 
-function handleAutoReloadChange(event) {
-  autoReloadEnabled = Boolean(event.target.checked);
+function handleAutoReloadChange(event: Event) {
+  autoReloadEnabled = (event.currentTarget as HTMLInputElement).checked;
   savePreference(AUTO_RELOAD_KEY, autoReloadEnabled);
 }
 
-function handleBase64ExportChange(event) {
-  base64ExportEnabled = Boolean(event.target.checked);
+function handleBase64ExportChange(event: Event) {
+  base64ExportEnabled = (event.currentTarget as HTMLInputElement).checked;
   savePreference(BASE64_EXPORT_KEY, base64ExportEnabled);
   updateExportImportLabels();
 }
@@ -1177,7 +1278,7 @@ function updateExportImportLabels() {
   }
 }
 
-function parseExpiryInput(input) {
+function parseExpiryInput(input: string): number | null {
   const value = (input ?? '').trim();
   if (!value) return null;
   const sessionLabel = t('sessionCookie').toLowerCase();
@@ -1197,7 +1298,7 @@ function parseExpiryInput(input) {
   return Math.floor(parsed / 1000);
 }
 
-function setDomainLabel(domain) {
+function setDomainLabel(domain: string | null) {
   if (domain) {
     activeDomainLabel.textContent = domain;
     activeDomainLabel.dataset.domainSet = 'true';
@@ -1207,16 +1308,20 @@ function setDomainLabel(domain) {
   }
 }
 
-function t(key, vars = {}) {
-  const langPack = translations[currentLanguage] || translations[DEFAULT_LANGUAGE] || {};
-  const fallbackPack = translations[DEFAULT_LANGUAGE] || {};
+function t(key: string, vars: Record<string, string | number | null | undefined> = {}): string {
+  const langPack: Record<string, string> = translations[currentLanguage];
+  const fallbackPack: Record<string, string> = translations[DEFAULT_LANGUAGE];
   const template = langPack[key] ?? fallbackPack[key] ?? key;
   if (typeof template !== 'string') {
     return key;
   }
-  return template.replace(/\{\{(\w+)\}\}/g, (_, varName) => vars[varName] ?? '');
+  return template.replace(/\{\{(\w+)\}\}/g, (_, varName) => String(vars[varName] ?? ''));
 }
 
-function formatError(error) {
-  return error?.message || String(error);
+function formatError(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+function isLanguage(value: unknown): value is Language {
+  return typeof value === 'string' && Object.prototype.hasOwnProperty.call(translations, value);
 }

@@ -37,6 +37,16 @@ npm run test:e2e
 
 Chrome sẽ hiển thị cảnh báo quyền đọc và thay đổi dữ liệu trên các website khi cài hoặc cập nhật extension. Đây là quyền rộng và chỉ nên cài extension từ bản phát hành tin cậy.
 
+## An toàn dữ liệu
+
+- Extension giữ đúng identity của cookie theo domain, path, cookie store và partition key; thao tác sửa/xóa không dựa riêng vào tên cookie.
+- Import chỉ nhận snapshot đúng schema, tối đa 10 MB và tối đa 5.000 cookie hoặc item `localStorage` cho mỗi nhóm.
+- Cookie không thuộc website đích bị từ chối. Khi người dùng xác nhận import khác website, cookie được chuyển thành host-only cookie của tab hiện tại.
+- Import Google Drive chỉ nhận link HTTPS từ `drive.google.com` hoặc `drive.usercontent.google.com`, có timeout và giới hạn kích thước như import file.
+- Metadata export chỉ lưu origin của trang, không lưu path, credentials, query hay fragment.
+
+Tùy chọn Base64 chỉ mã hóa biểu diễn dữ liệu để thuận tiện lưu/chuyển file, không phải encryption. Snapshot vẫn có thể chứa token đăng nhập; chỉ export/import và chia sẻ với nguồn tin cậy.
+
 ## Scripts
 
 - `npm run build`: bundle TypeScript và tạo package trong `dist/`.
@@ -49,6 +59,6 @@ Chrome sẽ hiển thị cảnh báo quyền đọc và thay đổi dữ liệu 
 
 ## Phát hành
 
-Manifest và `package.json` phải có cùng version. Tạo tag đúng định dạng, ví dụ `v1.1.2`; GitHub Actions sẽ kiểm tra quality gate, build file ZIP, tạo SHA-256, attestation và GitHub Release.
+Manifest và `package.json` phải có cùng version. Tạo tag đúng định dạng, ví dụ `v1.2.0`; GitHub Actions sẽ kiểm tra quality gate, build file ZIP, tạo SHA-256, attestation và GitHub Release.
 
 Xem thêm [PRIVACY.md](PRIVACY.md), [SECURITY.md](SECURITY.md) và [PRODUCTION_READINESS.md](PRODUCTION_READINESS.md).
